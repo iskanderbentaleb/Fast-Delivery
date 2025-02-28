@@ -1,0 +1,34 @@
+1)
+- create model , migration , seeder , controller with crud functions :
+  ---> php artisan make:model Wilaya -ms && php artisan make:controller WilayaController --resource
+       php artisan make:model Livreur -m && php artisan make:controller LivreurController --resource
+
+2)========== multi auther with interia ==============:
+    1) -> goto -> config/auth.php :
+    'guards' => [
+      // our new guard
+      'livreur' => [
+              'driver' => 'session',
+              'provider' => 'livreurs',
+    ],
+    'provider' => [
+          // our new provider (the model on which the guard will be based)
+          'livreurs' => [
+              'driver' => 'eloquent',
+              'model' => App\Models\Admin::class,
+          ],
+    ],
+    'passwords' => [
+      // our new password reset token table (will use the password_resets table for password reset tokens)
+      'livreurs' => [
+          'provider' => 'livreurs',
+          'table' => 'password_reset_tokens',
+          'expire' => 60,
+          'throttle' => 60,
+      ],
+    ],
+
+    2) go Model : Livreur and change it to auther and protect like default user
+
+    3) -> goto -> routes/auth.php : and start edit your routes and pages
+
