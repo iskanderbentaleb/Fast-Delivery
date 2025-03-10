@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Livreur;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class LivreurController extends Controller
 {
@@ -11,8 +13,13 @@ class LivreurController extends Controller
      */
     public function index()
     {
-        //
+        $livreurs = Livreur::with('wilaya')->latest()->paginate(10); // Paginate with 10 per page
+
+        return Inertia::render('admin/livreurs/index', [
+            'livreurs' => $livreurs, // This includes pagination links
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.

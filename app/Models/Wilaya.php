@@ -10,6 +10,8 @@ class Wilaya extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['wilaya_name'];
+
     public $incrementing = false; // Disables auto-incrementing ID
     protected $keyType = 'string'; // Ensures ID is treated as a string
 
@@ -24,5 +26,10 @@ class Wilaya extends Model
     public function communes()
     {
         return $this->hasMany(Communes::class, 'wilaya_id');
+    }
+
+    public function livreurs()
+    {
+        return $this->hasMany(Livreur::class, 'wilaya_id');
     }
 }

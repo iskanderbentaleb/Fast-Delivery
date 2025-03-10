@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('livreurs', function (Blueprint $table) {
-            $table->uuid('id')->primary(); // UUID as primary key
+            $table->id();
             $table->string('name');
             $table->string('phone', 50); // Phone number, max 50 chars
             $table->uuid('wilaya_id'); // Foreign key to Wilaya

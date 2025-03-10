@@ -19,7 +19,7 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('auth/Livreur/login', [
-            'canResetPassword' => Route::has('password.request'),
+            'canResetPassword' => Route::has('livreur.password.request'),
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -33,16 +33,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('livreur.dashboard'));
     }
-
 
     /**
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        Auth::guard('livreur')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

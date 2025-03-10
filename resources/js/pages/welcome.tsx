@@ -5,10 +5,11 @@ import { useEffect } from 'react';
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
 
-    // Redirect logged-in users to the dashboard
+    // Redirect logged-in users to the correct dashboard
     useEffect(() => {
         if (auth.user) {
-            window.location.href = route('dashboard');
+            const dashboardRoute = auth.user.role === 'admin' ? route('admin.dashboard') : route('livreur.dashboard');
+            window.location.href = dashboardRoute;
         }
     }, [auth.user]);
 
@@ -19,7 +20,7 @@ export default function Welcome() {
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
             <div className="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]">
-                {!auth.user && (
+                {!auth.user ? (
                     <div className="flex w-full flex-col items-center justify-center gap-6 opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
                         <div className="grid w-full max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2">
                             <Link
@@ -45,7 +46,11 @@ export default function Welcome() {
                             </Link>
                         </div>
                     </div>
-                )}
+                ) :
+                <>
+                    Loading...
+                </>
+                }
             </div>
         </>
     );

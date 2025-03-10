@@ -12,6 +12,9 @@ interface UserMenuContentProps {
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
 
+    // Determine the correct logout route based on the user's role
+    const logoutRoute = user.role === "livreur" ? route("livreur.logout") : route("admin.logout");
+
     return (
         <>
             <DropdownMenuLabel className="p-0 font-normal">
@@ -30,7 +33,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link className="block w-full" method="post" href={route('logout')} as="button" onClick={cleanup}>
+                <Link className="block w-full" method="post" href={logoutRoute} as="button" onClick={cleanup}>
                     <LogOut className="mr-2" />
                     Log out
                 </Link>

@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Support\Facades\Route;
 
 // admin controllers
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -9,12 +10,15 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 // use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use Illuminate\Support\Facades\Route;
+
 
 
 
 // livreur controllers
 use App\Http\Controllers\Auth\Livreur\AuthenticatedSessionController as LivreurAuthenticatedSessionController ;
+use App\Http\Controllers\Auth\Livreur\PasswordResetLinkController as LivreurPasswordResetLinkController ;
+use App\Http\Controllers\Auth\Livreur\NewPasswordController as LivreurNewPasswordController;
+
 
 
 
@@ -25,20 +29,14 @@ Route::middleware('guest')->prefix('admin')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('admin.login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
-
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('admin.password.email');
-
-
-
-
-
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-
-    Route::post('reset-password', [NewPasswordController::class, 'store'])->name('admin.password.store');
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('admin.password.email');
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('admin.password.reset');
+    Route::post('reset-password', [NewPasswordController::class, 'store'])->name(name: 'admin.password.store');
 });
 
-Route::middleware('auth')->prefix('admin')->group(function () {
+Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 
@@ -56,7 +54,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-        ->name('logout');
+        ->name('admin.logout');
 });
 // =============== admins routes ===============
 
@@ -68,38 +66,34 @@ Route::middleware('guest')->prefix('livreur')->group(function () {
     // Route::post('register', [RegisteredUserController::class, 'store']);
 
     Route::get('login', [LivreurAuthenticatedSessionController::class, 'create'])->name('livreur.login');
-
     Route::post('login', [LivreurAuthenticatedSessionController::class, 'store']);
-
-    // Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
-
-    // Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-
-    // Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-
-    // Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::get('forgot-password', [LivreurPasswordResetLinkController::class, 'create'])->name('livreur.password.request');
+    Route::post('forgot-password', action: [LivreurPasswordResetLinkController::class, 'store'])
+        ->name('livreur.password.email');
+    Route::get('reset-password/{token}', [LivreurNewPasswordController::class, 'create'])->name(name: 'livreur.password.reset');
+    Route::post('reset-password', [LivreurNewPasswordController::class, 'store'])->name('livreur.password.store');
 });
 
-// Route::middleware('auth')->prefix('livreur')->group(function () {
-//     Route::get('verify-email', EmailVerificationPromptController::class)
-//         ->name('verification.notice');
+Route::middleware('auth:livreur')->prefix('livreur')->group(function () {
+    // Route::get('verify-email', EmailVerificationPromptController::class)
+    //     ->name('verification.notice');
 
-//     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-//         ->middleware(['signed', 'throttle:6,1'])
-//         ->name('verification.verify');
+    // Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+    //     ->middleware(['signed', 'throttle:6,1'])
+    //     ->name('verification.verify');
 
-//     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-//         ->middleware('throttle:6,1')
-//         ->name('verification.send');
+    // Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+    //     ->middleware('throttle:6,1')
+    //     ->name('verification.send');
 
-//     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
-//         ->name('password.confirm');
+    // Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
+    //     ->name('password.confirm');
 
-//     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+    // Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
-//     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-//         ->name('logout');
-// });
+    Route::post('logout', [LivreurAuthenticatedSessionController::class, 'destroy'])
+        ->name('livreur.logout');
+});
 // =============== Livreur routes ===============
 
 
