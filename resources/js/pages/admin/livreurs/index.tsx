@@ -4,9 +4,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { DataTable } from './components/data-table';
 
 import { Button } from "@/components/ui/button";
-import { Link } from "@inertiajs/react";
 import { Trash, Edit } from "lucide-react";
-import { DataTablePagination } from './components/Pagination';
 
 type Livreur = {
     id: number;

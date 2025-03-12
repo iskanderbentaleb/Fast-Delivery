@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 import { DataTablePagination } from "./Pagination"
 import { Button } from "@/components/ui/button"
+import { Search } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -59,33 +60,38 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
 
   return (
     <div className="space-y-4">
-    {/* ---- Search & Controls ------ */}
-        <div className="flex flex-row flex-wrap items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-gray-300 dark:border-gray-700 shadow-sm">
-            <Button className="bg-zinc-950 text-white hover:bg-zinc-950 whitespace-nowrap">Add New</Button>
-        </div>
+
+
+    <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-2 rounded-lg border">
+        <Button className="bg-zinc-950 text-white hover:bg-zinc-900 whitespace-nowrap ml-auto">Add New</Button>
+    </div>
+
 
 
     {/* ---- Table ------ */}
-    <div className="overflow-hidden border border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-zinc-900 rounded-lg">
+    <div className="overflow-hidden border border-gray-300 dark:border-gray-700 bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
 
-        <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-4 border border-b-gray-300 dark:border-b-gray-700 shadow-sm">
+        {/* ---- Search ------ */}
+        <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-3 border border-b-gray-300 dark:border-b-gray-700 bg-white dark:bg-zinc-950">
             <Input
-            placeholder="Search..."
-            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
-            className="w-full sm:w-auto flex-1 border border-gray-300 dark:border-gray-700"
+                placeholder="Search..."
+                value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+                onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+                className="w-full sm:w-auto flex-1 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-transparent"
             />
-            {/* <Button className="bg-zinc-950 text-white hover:bg-zinc-950 whitespace-nowrap">Add New</Button> */}
+            <Button className="bg-zinc-900 text-white hover:bg-zinc-800 whitespace-nowrap">
+                <Search />
+            </Button>
         </div>
 
 
         <Table className="w-full">
             {/* Table Header */}
-            <TableHeader className="bg-gray-200 dark:bg-neutral-900">
+            <TableHeader className="bg-gray-100 dark:bg-neutral-950">
             {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                 key={headerGroup.id}
-                className="border-b border-gray-300 dark:border-gray-700 hover:bg-transparent"
+                className="border-1 border-gray-300 dark:border-gray-700 hover:bg-transparent"
                 >
                 {headerGroup.headers.map((header) => (
                     <TableHead
@@ -130,19 +136,14 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
     </div>
 
 
-      {/* ---- Pagination & Selected Rows ------ */}
-      <div className="flex items-center justify-between space-x-2 py-4 bg-white dark:bg-zinc-900 rounded-lg">
+        {/* ---- Pagination & Selected Rows ------ */}
+        <div className="flex items-center justify-between space-x-1 py-2 bg-white dark:bg-zinc-900 rounded-md">
             {/* Left Side: Selected Rows Info */}
-            <div className="flex ml-4">
+            <div className="ml-2">
                 <DataTablePagination paginationLinks={paginationLinks} />
             </div>
-
-            {/* Right Side: Pagination Controls */}
-            <div className="text-sm text-muted-foreground mr-4">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
         </div>
+
 
     </div>
   )
