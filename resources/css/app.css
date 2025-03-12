@@ -77,7 +77,7 @@
 }
 
 :root {
-    --background: hsl(0, 0%, 100%);
+    --background: hsl(220, 25%, 95%);
     --foreground: hsl(0, 0%, 3.9%);
     --card: hsl(0, 0%, 100%);
     --card-foreground: hsl(0, 0%, 3.9%);

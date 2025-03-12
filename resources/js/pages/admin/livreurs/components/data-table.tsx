@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DataTablePagination } from "./Pagination"
+import { Button } from "@/components/ui/button"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -58,79 +59,86 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
 
   return (
     <div className="space-y-4">
-      {/* ---- Search & Controls ------ */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Search Input */}
-        <Input
-          placeholder="Search..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
-          className="max-w-md border border-gray-300 dark:border-gray-700"
-        />
-      </div>
+    {/* ---- Search & Controls ------ */}
+        <div className="flex flex-row flex-wrap items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-gray-300 dark:border-gray-700 shadow-sm">
+            <Button className="bg-zinc-950 text-white hover:bg-zinc-950 whitespace-nowrap">Add New</Button>
+        </div>
+
 
     {/* ---- Table ------ */}
-    <div className="overflow-hidden rounded-sm border border-gray-300 dark:border-gray-700 shadow-sm">
-    <Table className="w-full">
-        {/* Table Header */}
-        <TableHeader className="bg-gray-200 dark:bg-neutral-900">
-        {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow
-            key={headerGroup.id}
-            className="border-b border-gray-300 dark:border-gray-700 hover:bg-transparent"
-            >
-            {headerGroup.headers.map((header) => (
-                <TableHead
-                key={header.id}
-                className="p-3 text-sm font-bold text-gray-900 dark:text-gray-100 uppercase text-center"
-                >
-                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-            ))}
-            </TableRow>
-        ))}
-        </TableHeader>
+    <div className="overflow-hidden border border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-zinc-900 rounded-lg">
+
+        <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-4 border border-b-gray-300 dark:border-b-gray-700 shadow-sm">
+            <Input
+            placeholder="Search..."
+            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+            className="w-full sm:w-auto flex-1 border border-gray-300 dark:border-gray-700"
+            />
+            {/* <Button className="bg-zinc-950 text-white hover:bg-zinc-950 whitespace-nowrap">Add New</Button> */}
+        </div>
 
 
-        {/* Table Body */}
-        <TableBody>
-        {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-            <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-            >
-                {row.getVisibleCells().map((cell) => (
-                <TableCell
-                    key={cell.id}
-                    className="p-4 border-b border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-200 text-center"
+        <Table className="w-full">
+            {/* Table Header */}
+            <TableHeader className="bg-gray-200 dark:bg-neutral-900">
+            {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                key={headerGroup.id}
+                className="border-b border-gray-300 dark:border-gray-700 hover:bg-transparent"
                 >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
+                {headerGroup.headers.map((header) => (
+                    <TableHead
+                    key={header.id}
+                    className="p-3 text-sm font-bold text-gray-900 dark:text-gray-100 uppercase"
+                    >
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                 ))}
-            </TableRow>
-            ))
-        ) : (
-            <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
-                No results found.
-            </TableCell>
-            </TableRow>
-        )}
-        </TableBody>
-    </Table>
+                </TableRow>
+            ))}
+            </TableHeader>
+
+
+            {/* Table Body */}
+            <TableBody>
+            {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                >
+                    {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                        key={cell.id}
+                        className="p-4 border border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-200"
+                    >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                    ))}
+                </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-gray-500">
+                    No results found.
+                </TableCell>
+                </TableRow>
+            )}
+            </TableBody>
+        </Table>
     </div>
 
 
       {/* ---- Pagination & Selected Rows ------ */}
-      <div className="flex items-center justify-between space-x-2 py-4">
+      <div className="flex items-center justify-between space-x-2 py-4 bg-white dark:bg-zinc-900 rounded-lg">
             {/* Left Side: Selected Rows Info */}
-            <div className="flex">
+            <div className="flex ml-4">
                 <DataTablePagination paginationLinks={paginationLinks} />
             </div>
 
             {/* Right Side: Pagination Controls */}
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mr-4">
                 {table.getFilteredSelectedRowModel().rows.length} of{" "}
                 {table.getFilteredRowModel().rows.length} row(s) selected.
             </div>
