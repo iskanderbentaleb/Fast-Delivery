@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Wilaya;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class WilayaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        // $wilayas = Wilaya::with('communes', 'livreurs')->get();
+
+        // return Inertia::render('Wilayas/Index', [
+        //     'wilayas' => $wilayas
+        // ]);
     }
 
     /**

@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('communes', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->unsignedInteger('id', false)->primary();
             $table->string('commune_name');
-            $table->uuid('wilaya_id'); // Foreign key to Wilaya
+            $table->unsignedTinyInteger('wilaya_id'); // Foreign key to Wilaya
 
             // Foreign key constraint
             $table->foreign('wilaya_id')->references('id')->on('wilayas')->onDelete('cascade');

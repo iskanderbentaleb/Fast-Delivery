@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wilayas', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('wilaya_name');
+            $table->unsignedTinyInteger('id')->primary(); // Allow values from 0 to 255
+            $table->string('wilaya_name' , 30);
         });
     }
 

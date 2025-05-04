@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('phone', 50); // Phone number, max 50 chars
-            $table->uuid('wilaya_id'); // Foreign key to Wilaya
+            $table->unsignedTinyInteger('wilaya_id'); // Foreign key to Wilaya
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

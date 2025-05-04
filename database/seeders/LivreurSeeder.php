@@ -22,7 +22,7 @@ class LivreurSeeder extends Seeder
         if (!$wilaya) {
             // If no Wilaya exists, create one
             $wilaya = Wilaya::create([
-                'id' => Str::uuid(),
+                'id' => 16,
                 'wilaya_name' => 'Alger', // Default Wilaya
             ]);
         }

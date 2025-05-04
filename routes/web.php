@@ -23,6 +23,9 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('colis', function () { return Inertia::render('admin/colis'); })->name('admin.colis');
 
     Route::get('livreurs', [LivreurController::class, 'index'])->name('admin.livreurs');
+    Route::get('livreurs/create', [LivreurController::class, 'create'])->name('admin.livreurs.create');
+    Route::post('livreurs', [LivreurController::class, 'store'])->name('admin.livreurs.store');
+    Route::delete('livreurs/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 });
 
 Route::middleware(['auth:livreur'])->prefix('livreur')->group(function () {

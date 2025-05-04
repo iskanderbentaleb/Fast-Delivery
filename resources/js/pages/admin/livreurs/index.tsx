@@ -1,10 +1,39 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { DataTable } from './components/data-table';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+
+
 import { Button } from "@/components/ui/button";
-import { Trash, Edit } from "lucide-react";
+import { Trash, Edit, MapPinned} from "lucide-react";
+import { toast } from 'sonner';
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+  } from "@/components/ui/popover"
+import { CommunePrices } from './index.CommunePrices';
+
+
+interface Commune {
+    id: number;
+    commune_name: string;
+    wilaya_id: number;
+  }
+
 
 type Livreur = {
     id: number;
@@ -19,46 +48,91 @@ interface LivreursProps {
         data: Livreur[];
         links: { url: string | null; label: string; active: boolean }[];
     };
+    communes: Commune[];
 }
 
 
-const columns: ColumnDef<Livreur>[] = [
-    { accessorKey: 'name', header: 'Nom' },
-    { accessorKey: 'phone', header: 'Telphone' },
-    { accessorKey: 'email', header: 'E-mail' },
-    { accessorKey: 'wilaya.wilaya_name', header: 'Wilaya' },
-    {
-        accessorKey: 'actions',
-        header: () => <div className="text-center w-full">Actions</div>, // Center header text
-        cell: ({ row }) => {
+export default function Livreurs({ livreurs, communes }: LivreursProps) {
+    const columns: ColumnDef<Livreur>[] = [
+        { accessorKey: 'name', header: 'Nom' },
+        { accessorKey: 'phone', header: 'Téléphone' },
+        { accessorKey: 'email', header: 'E-mail' },
+        { accessorKey: 'wilaya.wilaya_name', header: 'Zone' },
+        { accessorKey: '', header: 'Revenu total' },
+        { accessorKey: '', header: 'Montant à recevoir' },
+        { accessorKey: '', header: 'Montant à payer' },
+        {
+          accessorKey: 'actions',
+          header: () => <div className="text-center w-full">Actions</div>,
+          cell: ({ row }) => {
             const livreur = row.original;
 
+            const handleDelete = () => {
+              router.delete(route("admin.livreurs.destroy", { id: livreur.id }), {
+                onSuccess: () => toast("Livreur supprimé avec succès !"),
+                onError: () => toast.error("Une erreur s'est produite."),
+              });
+            };
+
+            const handleEdit = () => {
+              router.get(route("admin.livreurs.edit", { id: livreur.id }));
+            };
+
+            const filteredCommunes = communes.filter(c => c.wilaya_id === parseInt(livreur.wilaya.id));
+
             return (
-                <div className="flex justify-center items-center space-x-2">
-                    {/* Edit Button */}
-                    <Button variant="outline" size="sm" className="flex items-center">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                    </Button>
+              <div className="flex justify-center items-center space-x-2">
+                <Popover>
+                    <PopoverTrigger>
+                        <Button variant="outline" size="sm" className="flex items-center">
+                          <MapPinned className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[700px] max-h-[400px] overflow-auto">
+                        <CommunePrices
+                            livreurId={livreur.id}
+                            wilayaId={parseInt(livreur.wilaya.id)}
+                            communes={filteredCommunes}
+                        />
+                    </PopoverContent>
+                </Popover>
 
-                    {/* Delete Button */}
+                <Button variant="outline" size="sm" className="flex items-center" onClick={handleEdit}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" className="flex items-center">
-                        <Trash className="h-4 w-4 mr-1" />
-                        Delete
+                      <Trash className="h-4 w-4" />
                     </Button>
-                </div>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className='bg-white dark:bg-zinc-950'>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Êtes-vous sûr de vouloir supprimer ce livreur ?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             );
+          },
         },
-    },
-];
+    ];
 
-export default function Livreurs({ livreurs }: LivreursProps) {
     return (
         <AppLayout>
-            <Head title="Livreurs" />
+            <Head title="Liste des livreurs" />
             <div className="p-4">
                 <DataTable columns={columns} data={livreurs.data} paginationLinks={livreurs.links} />
             </div>
         </AppLayout>
     );
 }
+

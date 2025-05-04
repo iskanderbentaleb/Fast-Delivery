@@ -15,7 +15,7 @@ class WilayaSeeder extends Seeder
     public function run(): void
     {
         DB::table('wilayas')->insert([
-            'id' => Str::uuid(), // Generates a unique UUID
+            'id' => 16,
             'wilaya_name' => 'Alger',
         ]);
     }
