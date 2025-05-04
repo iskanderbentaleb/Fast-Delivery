@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { router } from "@inertiajs/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Save } from "lucide-react";
 
 export function CommunePrices({
   livreurId,
@@ -199,6 +200,7 @@ export function CommunePrices({
           className="w-full mt-4"
         >
           {saving ? "Enregistrement..." : "Enregistrer"}
+          <Save />
         </Button>
       </div>
 

@@ -40,9 +40,6 @@ class LivreurController extends Controller
             'search' => $search, // Pass search query to the frontend
         ]);
     }
-
-
-
     /**
      * Show the form for creating a new resource.
      */
@@ -105,16 +102,51 @@ class LivreurController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $livreur = Livreur::with('wilaya')->findOrFail($id);
+        $wilayas = Wilaya::all(['id', 'wilaya_name']);
+
+        return inertia('admin/livreurs/edit', [
+            'livreur' => $livreur,
+            'wilayas' => $wilayas,
+        ]);
     }
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $livreur = Livreur::findOrFail($id);
+
+        $validated = $request->validate([
+            'fullName' => 'required|string|min:2',
+            'phone' => 'required|string|min:10',
+            'email' => 'required|email|unique:livreurs,email,' . $livreur->id,
+            'wilaya' => 'required|exists:wilayas,id',
+        ],
+        [
+            'fullName.required' => 'Le nom complet est obligatoire.',
+            'fullName.min' => 'Le nom complet doit avoir au moins 2 caractères.',
+            'phone.required' => 'Le numéro de téléphone est obligatoire.',
+            'phone.min' => 'Le numéro de téléphone doit contenir au moins 10 chiffres.',
+            'email.required' => "L'adresse e-mail est obligatoire.",
+            'email.email' => "Veuillez entrer une adresse e-mail valide.",
+            'email.unique' => "L'adresse e-mail est déjà utilisée.",
+            'wilaya.required' => 'Veuillez sélectionner une wilaya.',
+            'wilaya.exists' => 'La wilaya sélectionnée est invalide.',
+        ]);
+
+        $livreur->name = $validated['fullName'];
+        $livreur->phone = $validated['phone'];
+        $livreur->email = $validated['email'];
+        $livreur->wilaya_id = $validated['wilaya'];
+
+        $livreur->save();
+
+        return redirect()->back();
     }
+
 
     /**
      * Remove the specified resource from storage.

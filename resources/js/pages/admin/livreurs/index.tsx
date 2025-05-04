@@ -74,8 +74,9 @@ export default function Livreurs({ livreurs, communes }: LivreursProps) {
               });
             };
 
+
             const handleEdit = () => {
-              router.get(route("admin.livreurs.edit", { id: livreur.id }));
+                router.get(route("admin.livreurs.edit", { id: livreur.id }));
             };
 
             const filteredCommunes = communes.filter(c => c.wilaya_id === parseInt(livreur.wilaya.id));

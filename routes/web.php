@@ -21,9 +21,17 @@ Route::get('/', function () {
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', function () {return Inertia::render('admin/dashboard'); })->name('admin.dashboard');
     Route::get('colis', function () { return Inertia::render('admin/colis'); })->name('admin.colis');
+
+    // Livreur Routes
     Route::get('livreurs', [LivreurController::class, 'index'])->name('admin.livreurs');
+
     Route::get('livreurs/create', [LivreurController::class, 'create'])->name('admin.livreurs.create');
     Route::post('livreurs', [LivreurController::class, 'store'])->name('admin.livreurs.store');
+
+    Route::get('livreurs/edit/{id}', [LivreurController::class, 'edit'])->name('admin.livreurs.edit');
+    Route::put('livreurs/update/{id}', [LivreurController::class, 'update'])->name('admin.livreurs.update');
+
+
     Route::delete('livreurs/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 });
 
