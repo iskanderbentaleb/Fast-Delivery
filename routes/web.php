@@ -18,13 +18,6 @@ Route::get('/', function () {
 
 
 
-// just for test pass ( github )
-Route::middleware(['auth'])->get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->name('dashboard');
-
-
-
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', function () {return Inertia::render('admin/dashboard'); })->name('admin.dashboard');
     Route::get('colis', function () { return Inertia::render('admin/colis'); })->name('admin.colis');
