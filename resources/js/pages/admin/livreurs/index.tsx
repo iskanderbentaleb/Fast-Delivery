@@ -25,7 +25,7 @@ import {
     PopoverContent,
     PopoverTrigger,
   } from "@/components/ui/popover"
-import { CommunePrices } from './index.CommunePrices';
+import { CommunePrices } from './CommunePrices';
 
 
 interface Commune {
