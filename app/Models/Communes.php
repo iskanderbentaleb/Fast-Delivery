@@ -23,4 +23,9 @@ class Communes extends Model
         return $this->belongsTo(Wilaya::class, 'wilaya_id');
     }
 
+    public function prices()
+    {
+        return $this->hasMany(CommunePrice::class, 'commune_id');
+    }
+
 }

@@ -24,15 +24,16 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 
     // Livreur Routes
     Route::get('livreurs', [LivreurController::class, 'index'])->name('admin.livreurs');
-
     Route::get('livreurs/create', [LivreurController::class, 'create'])->name('admin.livreurs.create');
-    Route::post('livreurs', [LivreurController::class, 'store'])->name('admin.livreurs.store');
 
+    Route::post('livreurs/{id}/prices', [LivreurController::class, 'updateCommunePrice'])->name('admin.livreurs.savePrices');
+
+
+    Route::post('livreurs/store', [LivreurController::class, 'store'])->name('admin.livreurs.store');
     Route::get('livreurs/edit/{id}', [LivreurController::class, 'edit'])->name('admin.livreurs.edit');
     Route::put('livreurs/update/{id}', [LivreurController::class, 'update'])->name('admin.livreurs.update');
+    Route::delete('livreurs/delete/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 
-
-    Route::delete('livreurs/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 });
 
 Route::middleware(['auth:livreur'])->prefix('livreur')->group(function () {

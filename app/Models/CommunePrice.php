@@ -16,6 +16,7 @@ class CommunePrice extends Model
     // Define the primary key fields (for completeness)
     protected $primaryKey = ['livreur_id', 'commune_id'];
 
+
     // Mass assignable fields
     protected $fillable = [
         'livreur_id',
@@ -39,4 +40,10 @@ class CommunePrice extends Model
     {
         return $this->belongsTo(Communes::class);
     }
+
+    public function getKeyName()
+    {
+        return ['livreur_id', 'commune_id'];  // Ensure it returns the composite key
+    }
+
 }

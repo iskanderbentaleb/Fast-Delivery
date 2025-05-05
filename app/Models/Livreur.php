@@ -54,4 +54,9 @@ class Livreur extends Authenticatable
     {
         return $this->belongsTo(Wilaya::class, 'wilaya_id');
     }
+
+    public function communePrices()
+    {
+        return $this->hasMany(CommunePrice::class, 'livreur_id');
+    }
 }
