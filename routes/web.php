@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ColieController;
 use App\Http\Controllers\LivreurController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,22 +22,17 @@ Route::get('/', function () {
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', function () {return Inertia::render('admin/dashboard'); })->name('admin.dashboard');
 
-
     // Livreur Routes
     Route::get('livreurs', [LivreurController::class, 'index'])->name('admin.livreurs');
     Route::get('livreurs/create', [LivreurController::class, 'create'])->name('admin.livreurs.create');
-
     Route::post('livreurs/{id}/prices', [LivreurController::class, 'updateCommunePrice'])->name('admin.livreurs.savePrices');
-
     Route::post('livreurs/store', [LivreurController::class, 'store'])->name('admin.livreurs.store');
     Route::get('livreurs/edit/{id}', [LivreurController::class, 'edit'])->name('admin.livreurs.edit');
     Route::put('livreurs/update/{id}', [LivreurController::class, 'update'])->name('admin.livreurs.update');
     Route::delete('livreurs/delete/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 
-
-    // Colis Routes
-    Route::get('colis', function () { return Inertia::render('admin/colis'); })->name('admin.colis');
-    Route::get('colis', [LivreurController::class, 'index'])->name('admin.colis');
+    // Colies Routes
+    Route::get('colis', [ColieController::class, 'index'])->name('admin.colies');
 
 
 });

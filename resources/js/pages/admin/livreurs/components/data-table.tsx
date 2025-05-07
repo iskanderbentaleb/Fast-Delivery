@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table"
 import { DataTablePagination } from "./Pagination"
 import { Button } from "@/components/ui/button"
-import { Plus, Search } from 'lucide-react';
+import { Search, UserRoundPlus } from 'lucide-react';
 
 import { useState } from "react";
 import { router, usePage } from "@inertiajs/react";
@@ -77,8 +77,8 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
                 onClick={() => router.get(route("admin.livreurs.create"))}
                 className="bg-zinc-950 text-white hover:bg-zinc-700 dark:hover:bg-zinc-900 whitespace-nowrap"
                 >
-                <Plus />
                 Créer un livreur
+                <UserRoundPlus />
             </Button>
         </div>
 

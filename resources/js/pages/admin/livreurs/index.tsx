@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { DataTable } from './components/data-table';
+import { DataTable } from '../livreurs/components/data-table';
 import { Button } from "@/components/ui/button";
 import { Trash, Edit, MapPinned } from "lucide-react";
 import { toast } from 'sonner';
@@ -24,7 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { CommunePrices } from './CommunePrices';
+import { CommunePrices } from '../livreurs/CommunePrices';
 
 interface Commune {
   id: number;
