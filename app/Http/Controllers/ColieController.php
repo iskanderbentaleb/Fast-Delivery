@@ -40,13 +40,16 @@ class ColieController extends Controller
         ]);
     }
 
-    // /**
-    //  * Show the form for creating a new colie.
-    //  */
-    // public function create()
-    // {
-    //     return Inertia::render('admin/colies/create');
-    // }
+    /**
+     * Show the form for creating a new colie.
+     */
+    public function create()
+    {
+        $wilayas = Wilaya::select('id', 'wilaya_name')->get();
+        return Inertia::render('admin/colies/create', [
+            'wilayas' => $wilayas,
+        ]);
+    }
 
     // /**
     //  * Store a newly created colie in storage.

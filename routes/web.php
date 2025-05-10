@@ -33,6 +33,7 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 
     // Colies Routes
     Route::get('colis', [ColieController::class, 'index'])->name('admin.colies');
+    Route::get('colis/create', [ColieController::class, 'create'])->name('admin.colies.create');
 
 
 });
