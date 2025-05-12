@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { MoveLeft } from "lucide-react";
+import { MoveLeft, Loader2, LockKeyholeOpen, LockKeyhole } from "lucide-react";
 import { Head, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import {
@@ -21,274 +21,650 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
-
-
-// Define Wilaya Type
 interface Wilaya {
   id: string;
   wilaya_name: string;
 }
 
-// Props for the Component
-interface CreateLivreurProps {
-  wilayas: Wilaya[];
+interface Commune {
+  id: string;
+  commune_name: string;
+  wilaya_id: string;
 }
 
-// Form Validation Schema
+interface Livreur {
+  livreur_id: string;
+  livreur_name: string;
+  delivery_price: number;
+  return_price: number;
+  commune_name: string;
+}
+
+interface CreateColisProps {
+  wilayas: Wilaya[];
+  errors: Record<string, string>;
+  communes: Commune[];
+  livreurs: Livreur[];
+  selectedWilaya?: string;
+  selectedCommune?: string;
+}
+
 const formSchema = z.object({
-  fullName: z.string().min(2, "Le nom complet doit avoir au moins 2 caractères."),
-  phone: z.string().min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres."),
-  wilaya: z.string().min(1, { message: "Veuillez sélectionner une Wilaya." }),
-  password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères." }),
+  fullName: z.string().trim().min(2, "Le nom complet doit contenir au moins 2 caractères"),
+  phone: z.string().trim().min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres")
+    .regex(/^[0-9]+$/, "Le numéro de téléphone ne doit contenir que des chiffres"),
+  wilaya: z.string().trim().min(1, "La wilaya est requise"),
+  commune: z.string().trim().min(1, "La commune est requise"),
+  adress: z.string().min(1, "L'adresse est requise"),
+  product: z.string().trim().min(3, "La description du produit doit contenir au moins 3 caractères"),
+  exchangeProduct: z.string().optional(),
+  prix_avec_livraison: z.string().min(1, "Le prix est requis")
+    .regex(/^\d+(\.\d{1,2})?$/, "Le prix doit être un nombre valide"),
+  numero_commande: z.string().optional(),
+  delivery_price: z.string().min(1, "Le prix de livraison est requis")
+    .regex(/^\d+(\.\d{1,2})?$/, "Le prix doit être un nombre valide"),
+  return_price: z.string().min(1, "Le prix de retour est requis")
+    .regex(/^\d+(\.\d{1,2})?$/, "Le prix doit être un nombre valide"),
+  livreur_id: z.string().trim().min(1, "Le livreur est requis"),
 });
 
-// Infer the type from schema
 type FormValues = z.infer<typeof formSchema>;
 
-interface FieldErrors {
-  [key: string]: string;
-}
+export default function CreateColis({
+  wilayas,
+  errors,
+  communes: initialCommunes,
+  livreurs: initialLivreurs,
+  selectedWilaya,
+  selectedCommune
+}: CreateColisProps) {
+  const [communes, setCommunes] = useState<Commune[]>(initialCommunes || []);
+  const [livreurs, setLivreurs] = useState<Livreur[]>(initialLivreurs || []);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
+  const [loadingLivreurs, setLoadingLivreurs] = useState(false);
 
-export default function CreateLivreur({ wilayas, errors }: CreateLivreurProps & { errors: FieldErrors }) {
-    const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-          fullName: "",
-          phone: "",
-          wilaya: "",
-          password: "",
-        },
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      wilaya: selectedWilaya || "",
+      commune: selectedCommune || "",
+      adress: "",
+      product: "",
+      exchangeProduct: "",
+      prix_avec_livraison: "",
+      numero_commande: "",
+      delivery_price: "",
+      return_price: "",
+      livreur_id: "",
+    },
+  });
+
+  useEffect(() => {
+    Object.keys(errors).forEach((field) => {
+      form.setError(field as keyof FormValues, {
+        type: "server",
+        message: errors[field],
       });
+    });
+  }, [errors, form]);
 
-      // Update errors when they come from Inertia
-      useEffect(() => {
-        Object.keys(errors).forEach((field) => {
-          form.setError(field as keyof FormValues, { type: "server", message: errors[field] });
-        });
-      }, [errors, form]); // Run this when errors change
+  const handleWilayaChange = (wilayaId: string) => {
+    form.resetField('commune');
+    form.resetField('livreur_id');
+    form.resetField('delivery_price');
+    form.resetField('return_price');
+    setLivreurs([]);
 
-      const onSubmit = (values: FormValues) => {
-        router.post(route("admin.livreurs.store"), values, {
-          onSuccess: () => {
-            toast("Livreur créé avec succès ! 🎉");
-            form.reset();
-          },
-          onError: () => {
-            toast.error("Une erreur s'est produite. Veuillez réessayer.");
-          },
-        });
-      };
+    if (!wilayaId) {
+      setCommunes([]);
+      return;
+    }
+
+    setLoadingCommunes(true);
+    router.get(route('admin.colies.create'), { wilaya_id: wilayaId }, {
+      preserveState: true,
+      onSuccess: (page) => {
+        setCommunes(page.props.communes);
+      },
+      onFinish: () => setLoadingCommunes(false)
+    });
+  };
+
+  const handleCommuneChange = (communeId: string) => {
+    form.resetField('livreur_id');
+    form.resetField('delivery_price');
+    form.resetField('return_price');
+
+    if (!communeId) {
+      setLivreurs([]);
+      return;
+    }
+
+    setLoadingLivreurs(true);
+    router.get(route('admin.colies.create'), {
+      wilaya_id: form.getValues('wilaya'),
+      commune_id: communeId
+    }, {
+      preserveState: true,
+      onSuccess: (page) => {
+        setLivreurs(page.props.livreurs);
+      },
+      onFinish: () => setLoadingLivreurs(false)
+    });
+  };
+
+  const onSubmit = (values: FormValues) => {
+    router.post(route("admin.colies.store"), values, {
+      onSuccess: () => {
+        toast.success("Colis créé avec succès 🎉 !");
+        form.reset();
+      },
+      onError: () => {
+        toast.error("Une erreur s'est produite ❌, Veuillez réessayer.");
+      },
+    });
+  };
+
+  function formatPrice(value: number | string) {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+  }
 
   return (
     <AppLayout>
       <Head title="Ajouter un colis" />
       <div className="flex flex-col p-3">
-
-        {/* Header */}
-        <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Ajouter un colis</h1>
-          <Button onClick={() => router.get(route("admin.livreurs"))} variant="outline" className="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <MoveLeft className="w-5 h-5 mr-2" />
-            Retour
+        <div className="flex justify-between items-center border-b p-4">
+          <h1 className="text-xl font-semibold">Ajouter un colis</h1>
+          <Button onClick={() => router.get(route("admin.colies.index"))} variant="outline">
+            <MoveLeft className="w-5 h-5 mr-2" /> Retour
           </Button>
         </div>
 
-
-
-    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow-sm mt-6">
-        <Form {...form}>
+        <div className="bg-white dark:bg-zinc-900 border p-6 rounded-xl shadow-sm mt-4">
+          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row md:justify-between gap-6">
-
-            {/* Left Side: Form Inputs */}
-            <div className="w-full md:w-[48%] space-y-5">
+              <div className="w-full md:w-[48%] space-y-3">
+                {/* Full Name */}
                 <FormField
-                name="fullName"
-                control={form.control}
-                render={({ field }) => (
+                  name="fullName"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Nom complet</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Nom et prénom" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel>Nom complet</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                          placeholder="Nom et prénom"
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
+                {/* Phone */}
                 <FormField
-                name="phone"
-                control={form.control}
-                render={({ field }) => (
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl>
-                        <Input type="tel" placeholder="Téléphone" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel>Téléphone</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                          placeholder="Téléphone"
+                          inputMode="tel"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^[0-9]*$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
+                {/* Wilaya */}
                 <FormField
-                name="wilaya"
-                control={form.control}
-                render={({ field }) => (
+                  name="wilaya"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Wilaya</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel>Wilaya</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleWilayaChange(value);
+                        }}
+                        value={field.value}
+                      >
                         <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-zinc-900">
+                          <SelectTrigger className="bg-white dark:bg-zinc-900">
                             <SelectValue placeholder="Sélectionner une wilaya" />
-                        </SelectTrigger>
+                          </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {wilayas.map((wilaya) => (
-                            <SelectItem key={wilaya.id} value={String(wilaya.id)}>
-                            {wilaya.wilaya_name}
+                          {wilayas.map((w) => (
+                            <SelectItem key={w.id} value={String(w.id)}>
+                              {w.wilaya_name}
                             </SelectItem>
-                        ))}
+                          ))}
                         </SelectContent>
-                    </Select>
-                    <FormMessage />
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
+                {/* Commune */}
                 <FormField
-                name="commune"
-                control={form.control}
-                render={({ field }) => (
+                  name="commune"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Commune</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel>Commune</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleCommuneChange(value);
+                        }}
+                        value={String(field.value)}
+                        disabled={!form.watch('wilaya') || loadingCommunes}
+                      >
                         <FormControl>
-                        <SelectTrigger className="bg-white dark:bg-zinc-900">
-                            <SelectValue placeholder="Sélectionner une commune" />
-                        </SelectTrigger>
+                          <SelectTrigger className="bg-white dark:bg-zinc-900">
+                            <div className="flex items-center gap-2">
+                              {loadingCommunes && <Loader2 className="h-4 w-4 animate-spin" />}
+                              <SelectValue placeholder={
+                                loadingCommunes ? "Chargement..." : "Sélectionner une commune"
+                              } />
+                            </div>
+                          </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {/* Communes to be loaded dynamically */}
+                          {communes.length > 0 ? (
+                            communes.map((commune) => (
+                              <SelectItem key={commune.id} value={String(commune.id)}>
+                                {commune.commune_name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="py-2 text-center text-sm text-muted-foreground">
+                              {form.watch('wilaya') ? "Aucune commune trouvée !" : "Sélectionnez d'abord une wilaya"}
+                            </div>
+                          )}
                         </SelectContent>
-                    </Select>
-                    <FormMessage />
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
+                {/* Livreur */}
                 <FormField
-                name="adress"
+                name="livreur_id"
                 control={form.control}
-                render={({ field }) => (
+                render={({ field }) => {
+                    const selectedLivreur = livreurs.find(l => l.livreur_id == field.value);
+                    return (
                     <FormItem>
-                    <FormLabel>Adresse</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Adresse complète" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                        <FormLabel>Livreur</FormLabel>
+                        <Select
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            const livreur = livreurs.find(l => l.livreur_id == value);
+                            if (livreur) {
+                            form.setValue('delivery_price', formatPrice(livreur.delivery_price));
+                            form.setValue('return_price', formatPrice(livreur.return_price));
+                            }
+                        }}
+                        value={field.value}
+                        disabled={!form.watch('commune') || loadingLivreurs}
+                        >
+                        <FormControl>
+                            <SelectTrigger className="bg-white dark:bg-zinc-900 w-full">
+                            <div className="flex items-center gap-2 w-full">
+                                {loadingLivreurs && <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />}
+                                <SelectValue
+                                placeholder={loadingLivreurs ? "Chargement..." : "Sélectionner un livreur"}
+                                className="truncate"
+                                >
+                                {selectedLivreur && (
+                                    <div className="flex items-center gap-1 truncate">
+                                    <span className="truncate">{selectedLivreur.livreur_name}</span>
+                                    <span className="hidden sm:inline-flex ml-2 rounded-md border border-green-600 bg-green-100 px-1.5 py-0.5 text-[0.6rem] text-green-800">
+                                        {formatPrice(selectedLivreur.delivery_price)} DA
+                                    </span>
+                                    </div>
+                                )}
+                                </SelectValue>
+                            </div>
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
+                            {livreurs.length > 0 ? (
+                            livreurs.map((livreur) => (
+                                <SelectItem
+                                key={livreur.livreur_id}
+                                value={String(livreur.livreur_id)}
+                                className="px-3 py-2"
+                                >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3 w-full">
+                                    <span className="font-medium truncate ml-5">{livreur.livreur_name}</span>
+                                    <div className="flex gap-1.5 ml-5">
+                                        <span className="inline-flex items-center rounded-md border border-green-600 bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                                            {formatPrice(livreur.delivery_price)} DA
+                                        </span>
+                                        <span className="inline-flex items-center rounded-md border border-red-600 bg-red-100 px-2 py-0.5 text-xs text-red-800">
+                                            {formatPrice(livreur.return_price)} DA
+                                        </span>
+                                    </div>
+                                </div>
+                                </SelectItem>
+                            ))
+                            ) : (
+                            <div className="py-2 text-center text-sm text-muted-foreground px-3">
+                                {form.watch('commune') ? "Aucun livreur disponible !" : "Sélectionnez d'abord une commune"}
+                            </div>
+                            )}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
                     </FormItem>
-                )}
+                    );
+                }}
                 />
 
+
+                {/* Delivery Price */}
                 <FormField
-                name="product"
-                control={form.control}
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Produit(s)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Nom du produit" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                  name="delivery_price"
+                  control={form.control}
+                  render={({ field }) => {
+                    const [isEditable, setIsEditable] = useState(false);
+                    return (
+                      <FormItem>
+                        <FormLabel>Prix de livraison</FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="border border-green-600 bg-green-100 text-green-900 placeholder-green-700 dark:bg-green-900 dark:border-green-500 dark:text-green-200"
+                              inputMode="decimal"
+                              readOnly={!isEditable}
+                              placeholder="0.00"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                  field.onChange(value);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsEditable(!isEditable)}
+                          >
+                            {isEditable ? (
+                              <LockKeyholeOpen className="h-4 w-4" />
+                            ) : (
+                              <LockKeyhole className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
+                {/* Return Price */}
                 <FormField
-                name="prix_avec_livraison"
-                control={form.control}
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Prix (avec livraison)</FormLabel>
-                    <FormControl>
-                        <Input type="tel" placeholder="Prix total" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                  name="return_price"
+                  control={form.control}
+                  render={({ field }) => {
+                    const [isEditable, setIsEditable] = useState(false);
+                    return (
+                      <FormItem>
+                        <FormLabel>Prix de retour</FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="border border-red-600 bg-red-100 text-red-900 placeholder-red-700 dark:bg-red-900 dark:border-red-500 dark:text-red-200"
+                              inputMode="decimal"
+                              readOnly={!isEditable}
+                              placeholder="0.00"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                  field.onChange(value);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsEditable(!isEditable)}
+                          >
+                            {isEditable ? (
+                              <LockKeyholeOpen className="h-4 w-4" />
+                            ) : (
+                              <LockKeyhole className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
+                {/* Address */}
                 <FormField
-                name="numero_commande"
-                control={form.control}
-                render={({ field }) => (
+                  name="adress"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Numéro de commande (externe)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Référence externe" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel>Adresse</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
 
+                {/* Product */}
                 <FormField
-                name="delivery_price"
-                control={form.control}
-                render={({ field }) => (
+                  name="product"
+                  control={form.control}
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Prix de livraison</FormLabel>
-                    <FormControl>
-                        <Input type="tel" placeholder="Prix de livraison" className="bg-white dark:bg-zinc-900" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel>Produit(s)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
-            </div>
 
-            {/* Vertical Separator */}
-            <div className="hidden md:flex justify-center items-center">
-                <div className="w-px h-[100%] bg-gray-300 dark:bg-gray-700" />
-            </div>
+                {/* Prix avec livraison */}
+                <FormField
+                  name="prix_avec_livraison"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prix (avec livraison)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d*\.?\d{0,2}$/.test(value)) {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Right Side: Facture */}
-            <div className="w-full md:w-[48%] flex flex-col justify-start">
-                <div className="p-4 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-gray-700 shadow-sm">
-                <h2 className="text-base font-semibold mb-4">🧾 Facture</h2>
+                {/* Numéro de commande */}
+                <FormField
+                  name="numero_commande"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Numéro de commande</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white dark:bg-zinc-900"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Exchange Product */}
+                <Accordion type="single" collapsible className="border rounded-md bg-white dark:bg-zinc-900">
+                  <AccordionItem value="item-1" className="border-b px-4 py-2">
+                    <AccordionTrigger>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Demander un échange après livraison ?
+                        <br />
+                        <span className="text-xs font-normal text-gray-600 dark:text-gray-400">
+                          (ceci va créer un second bordereau pour le retour de l'objet à échanger)
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 px-2">
+                      <FormField
+                        name="exchangeProduct"
+                        control={form.control}
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel>Produit(s) à échanger</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-white dark:bg-zinc-900 px-3 py-2 text-sm border rounded-md" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden md:flex justify-center items-center">
+                <div className="w-px h-full bg-gray-300 dark:bg-gray-700" />
+              </div>
+
+              {/* Right side */}
+              <div className="w-full md:w-[48%]">
+                <div className="p-4 bg-gray-50 dark:bg-zinc-800 border rounded-lg shadow-sm">
+                  <h2 className="text-base font-semibold mb-4">🧾 Résumé de la facture</h2>
+
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Frais de retour <span className="italic"><br/>(en cas de retour du colis)</span>
+                    </span>
+                    <span className="font-medium">
+                      {formatPrice(form.watch("return_price"))} DA
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-zinc-700 my-2" />
+
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600 dark:text-gray-400">Frais de livraison</span>
+                    <span className="font-medium">
+                      {formatPrice(form.watch("delivery_price"))} DA
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-zinc-700 my-2" />
 
                 <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">Prix de livraison</span>
-                    <span className="font-medium">{form.watch("delivery_price") || "0"} DA</span>
+                    <span className="text-gray-600 dark:text-gray-400">Montant à recevoir</span>
+                    <span className="font-medium">
+                        {formatPrice(
+                        (parseFloat(form.watch("prix_avec_livraison") || "0") || 0) -
+                        (parseFloat(form.watch("delivery_price") || "0") || 0)
+                        )} DA
+                    </span>
                 </div>
 
-                <div className="flex justify-between text-sm">
+                  <div className="border-t border-gray-300 dark:border-zinc-600 my-2" />
+
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Total</span>
-                    <span className="font-semibold">{form.watch("prix_avec_livraison") || "0"} DA</span>
+                    <span className="font-semibold">
+                      {formatPrice(form.watch("prix_avec_livraison"))} DA
+                    </span>
+                  </div>
                 </div>
-                </div>
-            </div>
+              </div>
             </form>
 
-            {/* Submit Button */}
-            <div className="mt-6">
-            <Button type="submit" className="bg-zinc-950 text-white hover:bg-zinc-800 w-full h-12 text-base">
-                Créer le colis
-            </Button>
+            <div className="mt-2">
+              <Button
+                type="submit"
+                className="bg-zinc-950 text-white hover:bg-zinc-950 w-full mt-4"
+                disabled={loadingCommunes || loadingLivreurs || form.formState.isSubmitting}
+                onClick={form.handleSubmit(onSubmit)}
+              >
+                {form.formState.isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    En cours...
+                  </div>
+                ) : (
+                  "Créer le colis"
+                )}
+              </Button>
             </div>
-        </Form>
-    </div>
-
-
-
-
-
-
-
+          </Form>
+        </div>
       </div>
     </AppLayout>
   );

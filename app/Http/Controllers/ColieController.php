@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\CommunePrice;
 use Illuminate\Http\Request;
 use App\Models\Colie;
 use App\Models\Communes;
@@ -43,13 +44,47 @@ class ColieController extends Controller
     /**
      * Show the form for creating a new colie.
      */
-    public function create()
-    {
-        $wilayas = Wilaya::select('id', 'wilaya_name')->get();
-        return Inertia::render('admin/colies/create', [
-            'wilayas' => $wilayas,
-        ]);
+     public function create(Request $request)
+     {
+         // Fetch all wilayas for the select dropdown
+         $wilayas = Wilaya::select('id', 'wilaya_name')->get();
+
+         $communes = collect();
+         $livreurs = collect();
+
+         // If wilaya_id is passed in the request, fetch the corresponding communes
+         if ($request->filled('wilaya_id')) {
+             $communes = Communes::where('wilaya_id', $request->wilaya_id)
+                 ->select('id', 'commune_name', 'wilaya_id')
+                 ->get();
+         }
+
+         // If commune_id is passed in the request, fetch the corresponding livreurs and prices
+         if ($request->filled('commune_id')) {
+             $livreurs = CommunePrice::with(['livreur:id,name', 'commune'])
+                 ->where('commune_id', $request->commune_id)
+                 ->get()
+                 ->map(function ($item) {
+                     return [
+                         'livreur_id' => $item->livreur_id,
+                         'livreur_name' => $item->livreur->name,
+                         'delivery_price' => $item->delivery_price,
+                         'return_price' => $item->return_price,
+                         'commune_name' => $item->commune->commune_name,
+                     ];
+                 });
+         }
+
+         return Inertia::render('admin/colies/create', [
+             'wilayas' => $wilayas,
+             'communes' => $communes,
+             'livreurs' => $livreurs,
+             'selectedWilaya' => $request->wilaya_id,
+             'selectedCommune' => $request->commune_id,
+         ]);
     }
+
+
 
     // /**
     //  * Store a newly created colie in storage.
