@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('colies', function (Blueprint $table) {
-            $table->string('id', length: 9)->primary(); // 000-12-31-001 → 000366001 (numeric) 000=2025-2025 || max is : 999366999
-            $table->string('tracking', 6)->unique(); // → 7LFL (Base36). || max is : LFLZ7R
+            $table->string('id', length: 9)->primary(); // 000-12-31-001 → 000366001 (numeric) 000=2025-2025 || max id is : 999366999
+            $table->string('tracking', 10)->unique(); // → prefix FDY(ECH)-7LFL (Base36). || max is : LFLZ7R
             $table->string('client_fullname', 50);
             $table->string('client_phone' , 50);
             $table->string('client_address', 100);
@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('id_exchange_return', 9)->nullable(); // for exchange or related colie
             $table->string('id_status', 3);
             $table->uuid('id_payment')->nullable(); // nullable : not paid yet
+            $table->unsignedBigInteger('livreur_id')->nullable();
 
             $table->index('id_wilaya');
             $table->index('id_commune');
@@ -43,6 +44,7 @@ return new class extends Migration
             $table->foreign('id_exchange_return')->references('id')->on(table: 'colies')->onDelete('cascade');
             $table->foreign('id_status')->references('id')->on('statuses')->onDelete('restrict');
             $table->foreign('id_payment')->references('id')->on('payments')->onDelete('set null');
+            $table->foreign('livreur_id')->references('id')->on('livreurs')->onDelete('set null');
 
             $table->timestamps();
         });

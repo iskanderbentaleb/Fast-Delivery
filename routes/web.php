@@ -34,6 +34,10 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     // Colies Routes
     Route::get('colis', [ColieController::class, 'index'])->name('admin.colies');
     Route::get('colis/create', [ColieController::class, 'create'])->name('admin.colies.create');
+    Route::post('colis/store', [ColieController::class, 'store'])->name('admin.colies.store');
+    Route::delete('colis/{colie}', [ColieController::class, 'destroy'])->name('admin.colies.destroy');
+    Route::get('colis/edit/{colie}', [ColieController::class, 'edit'])->name('admin.colies.edit');
+    Route::put('colis/colies/{colie}', [ColieController::class, 'update'])->name('admin.colies.update');
 
 
 });

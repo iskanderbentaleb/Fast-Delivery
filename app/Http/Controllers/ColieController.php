@@ -1,50 +1,76 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\StoreColieRequest;
+use App\Http\Requests\UpdateColieRequest;
 use App\Models\CommunePrice;
 use Illuminate\Http\Request;
 use App\Models\Colie;
 use App\Models\Communes;
 use App\Models\Status;
+use App\Models\User;
 use App\Models\Wilaya;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ColieController extends Controller
 {
+    /**
+     * Display a listing of the colies.
+     */
+    protected function buildColieQuery(Request $request)
+    {
+    $search = $request->input('search');
+    $statusFilters = $request->input('statuses', []);
+
+    return Colie::with(['wilaya', 'commune', 'status', 'payment', 'livreur'])
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('client_fullname', 'like', "%{$search}%")
+                    ->orWhere('client_phone', 'like', "%{$search}%")
+                    ->orWhere('tracking', 'like', "%{$search}%")
+                    ->orWhere('external_id', 'like', "%{$search}%")
+                    ->orWhereHas('wilaya', fn($w) => $w->where('wilaya_name', 'like', "%{$search}%"))
+                    ->orWhereHas('commune', fn($c) => $c->where('commune_name', 'like', "%{$search}%"))
+                    ->orWhereHas('status', fn($s) => $s->where('status', 'like', "%{$search}%"));
+            });
+        })
+        ->when(!empty($statusFilters), function ($query) use ($statusFilters) {
+            $query->whereIn('id_status', $statusFilters);
+        })
+        ->orderBy('updated_at', 'desc')
+        ->orderBy('id', 'desc');
+    }
+
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $query = $this->buildColieQuery($request);
 
         $communes = Communes::select('id', 'commune_name', 'wilaya_id')->get();
+        $statuses = Status::all();
 
-        $colies = Colie::with(['wilaya', 'commune', 'status', 'payment'])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('client_fullname', 'like', "%{$search}%")
-                        ->orWhere('client_phone', 'like', "%{$search}%")
-                        ->orWhere('tracking', 'like', "%{$search}%")
-                        ->orWhere('external_id', 'like', "%{$search}%")
-                        ->orWhereHas('wilaya', fn($w) => $w->where('wilaya_name', 'like', "%{$search}%"))
-                        ->orWhereHas('commune', fn($c) => $c->where('commune_name', 'like', "%{$search}%"))
-                        ->orWhereHas('status', fn($s) => $s->where('status', 'like', "%{$search}%"));
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->appends(['search' => $search]);
+        $colies = $query->paginate(10)->appends([
+            'search' => $request->input('search'),
+            'statuses' => $request->input('statuses', [])
+        ]);
 
         return Inertia::render('admin/colies/index', [
             'colies' => $colies,
+            'colies_count' => $colies->total(),
             'communes' => $communes,
-            'search' => $search,
+            'statuses' => $statuses,
+            'search' => $request->input('search'),
+            'selectedFilters' => $request->input('statuses', []),
         ]);
     }
 
     /**
      * Show the form for creating a new colie.
      */
-     public function create(Request $request)
+    public function create(Request $request)
      {
          // Fetch all wilayas for the select dropdown
          $wilayas = Wilaya::select('id', 'wilaya_name')->get();
@@ -84,86 +110,290 @@ class ColieController extends Controller
          ]);
     }
 
+    /**
+     * Store a newly created colie in storage.
+     */
+    public function store(StoreColieRequest $request)
+    {
+        $validated = $request->validated();
 
+        try {
+            DB::beginTransaction();
 
-    // /**
-    //  * Store a newly created colie in storage.
-    //  */
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'id' => 'required|string|size:9|unique:colies,id',
-    //         'tracking' => 'required|string|size:6|unique:colies,tracking',
-    //         'client_fullname' => 'required|string|max:50',
-    //         'client_phone' => 'required|string|max:50',
-    //         'client_address' => 'required|string|max:100',
-    //         'products' => 'required|string|max:100',
-    //         'external_id' => 'required|string|max:30',
-    //         'client_amount' => 'required|numeric',
-    //         'livreur_amount' => 'required|numeric',
-    //         'product_value' => 'required|numeric',
-    //         'return_fee' => 'required|numeric',
-    //         'has_exchange' => 'boolean',
+            $newId = $this->generateColieId();
+            $hasExchange = !empty($validated['exchangeProduct']);
+            $tracking = strtoupper(base_convert($newId, 10, 36));
 
-    //         'id_wilaya' => 'required|integer|exists:wilayas,id',
-    //         'id_commune' => 'required|integer|exists:communes,id',
-    //         'id_exchange_return' => 'nullable|string|exists:colies,id',
-    //         'id_status' => 'required|string|exists:statuses,id',
-    //         'id_payment' => 'nullable|uuid|exists:payments,id',
-    //     ]);
+            // Create main colis
+            $colie = Colie::create([
+                'id' => $newId,
+                'tracking' => 'FDY-' . $tracking,
+                'client_fullname' => $validated['fullName'],
+                'client_phone' => $validated['phone'],
+                'client_address' => $validated['adress'],
+                'products' => $validated['product'],
+                'external_id' => $validated['numero_commande'],
+                'client_amount' => $validated['prix_avec_livraison'],
+                'livreur_amount' => $validated['delivery_price'],
+                'product_value' => $validated['product_value'],
+                'return_fee' => $validated['return_price'],
+                'has_exchange' => $hasExchange,
+                'id_wilaya' => $validated['wilaya'],
+                'id_commune' => $validated['commune'],
+                'id_status' => '001',
+                'id_payment' => null,
+                'livreur_id' => $validated['livreur_id'],
+            ]);
 
-    //     Colie::create($validated);
+            // If exchange is requested, create return colis
+            if ($hasExchange) {
 
-    //     return redirect()->route('colies.index')->with('success', 'Colie created successfully.');
-    // }
+                $returnId = $this->generateColieId();
+
+                $returnColie = Colie::create([
+                    'id' => $returnId,
+                    'tracking' => 'ECH-' . $tracking,
+                    'client_fullname' => $validated['fullName'], // Your name as receiver
+                    'client_phone' => $validated['phone'], // Your phone
+                    'client_address' => $validated['adress'], // Your address
+                    'products' => $validated['exchangeProduct'],
+                    'external_id' => $validated['numero_commande'] . '-RET',
+                    'client_amount' => 0, // Typically no amount for return
+                    'livreur_amount' => 0, // Typically no amount for return
+                    'product_value' => $validated['valueExchangeProduct'],
+                    'return_fee' => 0,
+                    'has_exchange' => false,
+                    'id_wilaya' => Auth::user()->id_wilaya ,
+                    'id_commune' => Auth::user()->id_commune ,
+                    'id_exchange_return' => $newId, // Link to original colis
+                    'id_status' => '012', // Echange (pas encore ramassé)
+                    'id_payment' => null,
+                    'livreur_id' => $validated['livreur_id'],
+                ]);
+
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.colies')
+                ->with('success', 'Colis créé avec succès !' . ($hasExchange ? ' (avec bordereau de retour)' : ''));
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                // Log the error with full details
+                Log::error('Erreur lors de la création du colis', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]);
+
+                return back()
+                    ->withInput()
+                    ->with('error', 'Une erreur est survenue lors de la création du colis: ' . $e->getMessage());
+            }
+    }
+    /**
+     * Generate a unique colie ID.
+     *
+     * @return string
+    */
+    protected function generateColieId(): string
+    {
+        // 000-12-31-001 → 000366001 (numeric) 000=2025-2025 || max id is : 999366999
+        $baseYear = User::orderBy('created_at')->value('created_at')?->format('Y') ?? now()->year;
+
+        $currentYear = (int) date('Y');
+        $yearDiff = str_pad((string) ($currentYear - $baseYear), 3, '0', STR_PAD_LEFT);
+
+        $dayOfYear = str_pad((string)(date('z') + 1), 3, '0', STR_PAD_LEFT);
+
+        // Get last colie of today
+        $todayStart = now()->startOfDay();
+        $todayEnd = now()->endOfDay();
+
+        $lastColie = Colie::whereBetween('created_at', [$todayStart, $todayEnd])
+            ->orderByDesc('id')
+            ->first();
+
+        $lastSequence = $lastColie
+            ? (int) substr($lastColie->id, -3)
+            : 0;
+
+        $sequence = str_pad((string) ($lastSequence + 1), 3, '0', STR_PAD_LEFT);
+
+        return $yearDiff . $dayOfYear . $sequence;
+    }
+
 
     // /**
     //  * Show the form for editing the specified colie.
     //  */
-    // public function edit(Colie $colie)
-    // {
-    //     return Inertia::render('admin/colies/edit', [
-    //         'colie' => $colie->load(['wilaya', 'commune', 'status', 'payment']),
-    //     ]);
-    // }
+    public function edit(Request $request, Colie $colie)
+    {
+        $wilayas = Wilaya::select('id', 'wilaya_name')->get();
+        $communes = collect();
+        $livreurs = collect();
+
+        // Load communes if wilaya is set on the colie
+        if ($colie->id_wilaya) {
+            $communes = Communes::where('wilaya_id', $colie->id_wilaya)
+                ->select('id', 'commune_name', 'wilaya_id')
+                ->get();
+        }
+
+        // Load livreurs if commune is set on the colie
+        if ($colie->id_commune) {
+            $livreurs = CommunePrice::with(['livreur:id,name', 'commune'])
+                ->where('commune_id', $colie->id_commune)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'livreur_id' => $item->livreur_id,
+                        'livreur_name' => $item->livreur->name,
+                        'delivery_price' => $item->delivery_price,
+                        'return_price' => $item->return_price,
+                        'commune_name' => $item->commune->commune_name,
+                    ];
+                });
+        }
+
+        return Inertia::render('admin/colies/edit', [
+            'colie' => $colie->load('exchangedColies'),
+            'wilayas' => $wilayas,
+            'communes' => $communes,
+            'livreurs' => $livreurs,
+            'selectedWilaya' => $colie->id_wilaya,
+            'selectedCommune' => $colie->id_commune,
+        ]);
+    }
 
     // /**
     //  * Update the specified colie in storage.
     //  */
-    // public function update(Request $request, Colie $colie)
-    // {
-    //     $validated = $request->validate([
-    //         'client_fullname' => 'required|string|max:50',
-    //         'client_phone' => 'required|string|max:50',
-    //         'client_address' => 'required|string|max:100',
-    //         'products' => 'required|string|max:100',
-    //         'external_id' => 'required|string|max:30',
-    //         'client_amount' => 'required|numeric',
-    //         'livreur_amount' => 'required|numeric',
-    //         'product_value' => 'required|numeric',
-    //         'return_fee' => 'required|numeric',
-    //         'has_exchange' => 'boolean',
+    public function update(UpdateColieRequest $request, Colie $colie)
+    {
+        $validated = $request->validated();
+        $hasExchange = !empty($validated['exchangeProduct']);
 
-    //         'id_wilaya' => 'required|integer|exists:wilayas,id',
-    //         'id_commune' => 'required|integer|exists:communes,id',
-    //         'id_exchange_return' => 'nullable|string|exists:colies,id',
-    //         'id_status' => 'required|string|exists:statuses,id',
-    //         'id_payment' => 'nullable|uuid|exists:payments,id',
-    //     ]);
 
-    //     $colie->update($validated);
+        if ($colie->id_status !== '001' || $colie->id_payment !== null){ // if not "En Préparation"
+            return redirect()->back()->with('error', 'Ce colis ne peut pas être modifé .');
+        }
 
-    //     return redirect()->route('colies.index')->with('success', 'Colie updated successfully.');
-    // }
+        try {
+            DB::beginTransaction();
+
+            // Update main colis
+            $colie->update([
+                'client_fullname' => $validated['fullName'],
+                'client_phone' => $validated['phone'],
+                'client_address' => $validated['adress'],
+                'products' => $validated['product'],
+                'external_id' => $validated['numero_commande'],
+                'client_amount' => $validated['prix_avec_livraison'],
+                'livreur_amount' => $validated['delivery_price'],
+                'product_value' => $validated['product_value'],
+                'return_fee' => $validated['return_price'],
+                'has_exchange' => $hasExchange,
+                'id_wilaya' => $validated['wilaya'],
+                'id_commune' => $validated['commune'],
+                'id_payment' => $validated['id_payment'] ?? null,
+                'livreur_id' => $validated['livreur_id'],
+            ]);
+
+            // Check if there’s an existing exchange colis
+            $exchangeColie = Colie::where('id_exchange_return', $colie->id)->first();
+
+            if ($hasExchange) {
+                if ($exchangeColie) {
+                    // Update existing exchange colie
+                    $exchangeColie->update([
+                        'client_fullname' => $validated['fullName'], // Your name as receiver
+                        'client_phone' => $validated['phone'], // Your phone
+                        'client_address' => $validated['adress'], // Your address
+                        'external_id' => $validated['numero_commande'] . '-RET',
+                        'client_amount' => 0, // Typically no amount for return
+                        'livreur_amount' => 0, // Typically no amount for return
+                        'return_fee' => 0,
+                        'has_exchange' => false,
+                        'id_wilaya' => Auth::user()->id_wilaya ,
+                        'id_commune' => Auth::user()->id_commune ,
+                        'products' => $validated['exchangeProduct'],
+                        'product_value' => $validated['valueExchangeProduct'],
+                        'livreur_id' => $validated['livreur_id'],
+                    ]);
+                } else {
+                    // Create new exchange colie
+                    $returnId = $this->generateColieId();
+                    $tracking = strtoupper(base_convert($colie->id, 10, 36));
+
+                    Colie::create([
+                        'id' => $returnId,
+                        'tracking' => 'ECH-' . $tracking,
+                        'client_fullname' => $validated['fullName'],
+                        'client_phone' => $validated['phone'],
+                        'client_address' => $validated['adress'],
+                        'products' => $validated['exchangeProduct'],
+                        'external_id' => $validated['numero_commande'] . '-RET',
+                        'client_amount' => 0,
+                        'livreur_amount' => 0,
+                        'product_value' => $validated['valueExchangeProduct'],
+                        'return_fee' => 0,
+                        'has_exchange' => false,
+                        'id_wilaya' => Auth::user()->id_wilaya,
+                        'id_commune' => Auth::user()->id_commune,
+                        'id_exchange_return' => $colie->id,
+                        'id_status' => '012',
+                        'id_payment' => null,
+                        'livreur_id' => $validated['livreur_id'],
+                    ]);
+                }
+            } elseif ($exchangeColie) {
+                // Delete old exchange colie if user removed it
+                $exchangeColie->delete();
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.colies')
+                ->with('success', 'Colis mis à jour avec succès !');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la mise à jour du colis', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Une erreur est survenue lors de la mise à jour du colis: ' . $e->getMessage());
+        }
+    }
+
 
     // /**
     //  * Remove the specified colie from storage.
     //  */
-    // public function destroy(Colie $colie)
-    // {
-    //     $colie->delete();
+    public function destroy(Colie $colie)
+    {
+        if (
+            $colie->id_status !== '001' || // if (En préparation) can delete  else not
+            $colie->id_payment !== null || // payé can delete
+            $colie->id_exchange_return !== null // if retour echange can not delete
+        ) {
+            return redirect()->back()->with('error', 'Ce colis ne peut pas être supprimé. Il est payé, retourné ou a un statut non autorisé.');
+        }
 
-    //     return redirect()->route('colies.index')->with('success', 'Colie deleted successfully.');
-    // }
+        $colie->delete();
+        return redirect()->route('admin.colies')->with('success', 'Colis supprimé avec succès.');
+    }
+
 }
 

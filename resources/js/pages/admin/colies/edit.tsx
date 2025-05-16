@@ -52,13 +52,34 @@ interface Livreur {
 }
 
 interface CreateColisProps {
-  wilayas: Wilaya[];
-  errors: Record<string, string>;
-  communes: Commune[];
-  livreurs: Livreur[];
-  selectedWilaya?: string;
-  selectedCommune?: string;
-}
+    colie: {
+      id: string;
+      client_fullname: string;
+      client_phone: string;
+      client_address: string;
+      products: string;
+      external_id?: string;
+      client_amount: string;
+      livreur_amount: string;
+      product_value: string;
+      return_fee: string;
+      has_exchange: boolean;
+      id_wilaya?: string;
+      id_commune?: string;
+      livreur_id?: string;
+      exchanged_colies?: Array<{
+        products?: string;
+        product_value?: string;
+      }>;
+    };
+    wilayas: Wilaya[];
+    errors: Record<string, string>;
+    communes: Commune[];
+    livreurs: Livreur[];
+    selectedWilaya?: string;
+    selectedCommune?: string;
+  }
+
 
 const formSchema = z.object({
   fullName: z.string().trim().min(2, "Le nom complet doit contenir au moins 2 caractères"),
@@ -88,40 +109,40 @@ const formSchema = z.object({
         message: "Ce champ est requis si un produit d’échange est fourni.",
       });
     }
-  });
+});
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function CreateColis({
+export default function EditColis({
+  colie,
   wilayas,
   errors,
   communes: initialCommunes,
   livreurs: initialLivreurs,
-  selectedWilaya,
-  selectedCommune
 }: CreateColisProps) {
   const [communes, setCommunes] = useState<Commune[]>(initialCommunes || []);
   const [livreurs, setLivreurs] = useState<Livreur[]>(initialLivreurs || []);
   const [loadingCommunes, setLoadingCommunes] = useState(false);
   const [loadingLivreurs, setLoadingLivreurs] = useState(false);
 
-  const form = useForm<FormValues>({
+    // Update the form default values
+    const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "iskander bentaleb",
-      phone: "0697645435",
-      wilaya: selectedWilaya || '',
-      commune: selectedCommune || '',
-      adress: "Alger",
-      product: "Produit de test",
-      exchangeProduct: "Produit à échanger",
-      valueExchangeProduct: "4500",
-      prix_avec_livraison: "5000",
-      numero_commande: "web6010",
-      delivery_price: "",
-      product_value: "4500",
-      return_price: "",
-      livreur_id: "",
+      fullName: colie.client_fullname || '',
+      phone: colie.client_phone || '',
+      wilaya: colie.id_wilaya?.toString() || '',
+      commune: colie.id_commune?.toString() || '',
+      livreur_id: colie.livreur_id?.toString() || '',
+      adress: colie.client_address || '',
+      product: colie.products || '',
+      exchangeProduct: Array.isArray(colie.exchanged_colies) && colie.exchanged_colies[0]?.products || '',
+      valueExchangeProduct: Array.isArray(colie.exchanged_colies) && colie.exchanged_colies[0]?.product_value || '',
+      prix_avec_livraison: colie.client_amount?.toString() || '0.00',
+      numero_commande: colie.external_id || '',
+      delivery_price: colie.livreur_amount?.toString() || '0.00',
+      product_value: colie.product_value?.toString() || '0.00',
+      return_price: colie.return_fee?.toString() || '0.00',
     },
   });
 
@@ -147,10 +168,10 @@ export default function CreateColis({
     }
 
     setLoadingCommunes(true);
-    router.get(route('admin.colies.create'), { wilaya_id: wilayaId }, {
+    router.get(route('admin.colies.edit' , colie.id), { wilaya_id: wilayaId }, {
       preserveState: true,
       onSuccess: (page) => {
-        setCommunes(page.props.communes);
+        setCommunes(page.props.communes as Commune[]);
       },
       onFinish: () => setLoadingCommunes(false)
     });
@@ -167,29 +188,30 @@ export default function CreateColis({
     }
 
     setLoadingLivreurs(true);
-    router.get(route('admin.colies.create'), {
+    router.get(route('admin.colies.edit' , colie.id), {
       wilaya_id: form.getValues('wilaya'),
       commune_id: communeId
     }, {
       preserveState: true,
       onSuccess: (page) => {
-        setLivreurs(page.props.livreurs);
+        setLivreurs(page.props.livreurs as Livreur[]);
       },
       onFinish: () => setLoadingLivreurs(false)
     });
   };
 
   const onSubmit = (values: FormValues) => {
-    router.post(route("admin.colies.store"), values, {
+    router.put(route("admin.colies.update", colie.id), values, {
       onSuccess: () => {
-        toast.success("Colis créé avec succès 🎉 !");
+        toast.success("Colis mis à jour avec succès 🎉 !");
         form.reset();
       },
       onError: () => {
-        toast.error("Une erreur s'est produite ❌, Veuillez réessayer.");
+        toast.error("Une erreur s'est produite ❌. Veuillez réessayer.");
       },
     });
   };
+
 
   function formatPrice(value: number | string) {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -198,10 +220,10 @@ export default function CreateColis({
 
   return (
     <AppLayout>
-      <Head title="Ajouter un colis" />
+      <Head title="Modifier un colis" />
       <div className="flex flex-col p-3">
         <div className="flex justify-between items-center border-b p-4">
-          <h1 className="text-xl font-semibold">Ajouter un colis</h1>
+          <h1 className="text-xl font-semibold">Modifier un colis</h1>
           <Button onClick={() => router.get(route("admin.colies"))} variant="outline">
             <MoveLeft className="w-5 h-5 mr-2" /> Retour
           </Button>
@@ -413,6 +435,7 @@ export default function CreateColis({
                   name="delivery_price"
                   control={form.control}
                   render={({ field }) => {
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
                     const [isEditable, setIsEditable] = useState(false);
                     return (
                       <FormItem>
@@ -457,6 +480,7 @@ export default function CreateColis({
                   name="return_price"
                   control={form.control}
                   render={({ field }) => {
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
                     const [isEditable, setIsEditable] = useState(false);
                     return (
                       <FormItem>
@@ -724,7 +748,7 @@ export default function CreateColis({
                     En cours...
                   </div>
                 ) : (
-                  "Créer le colis"
+                  "Modifier le colis"
                 )}
               </Button>
             </div>

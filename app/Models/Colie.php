@@ -29,6 +29,7 @@ class Colie extends Model
         'id_commune',
         'id_exchange_return',
         'id_status',
+        'livreur_id',
         'id_payment',
     ];
 
@@ -69,5 +70,10 @@ class Colie extends Model
     public function exchangedColies()
     {
         return $this->hasMany(Colie::class, 'id_exchange_return');
+    }
+
+    public function livreur()
+    {
+        return $this->belongsTo(Livreur::class, 'livreur_id');
     }
 }

@@ -59,4 +59,10 @@ class Livreur extends Authenticatable
     {
         return $this->hasMany(CommunePrice::class, 'livreur_id');
     }
+
+    public function Colie()
+    {
+        return $this->hasMany(Colie::class, 'livreur_id');
+    }
+
 }

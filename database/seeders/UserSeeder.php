@@ -18,8 +18,13 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->insert([
             [
-                'name' => 'Iskander Admin',
+                'name' => 'BENTALEB ISKANDER',
                 'email' => 'iskanderboss1999@gmail.com',
+                'storename' => 'BEBE MODE',
+                'phone' => '0770563130',
+                'address' => 'Villa N94',
+                'id_wilaya' => 16,
+                'id_commune' => 16017,
                 'email_verified_at' => Carbon::now(),
                 'password' => Hash::make('iskanderboss1999@gmail.com'),
                 'remember_token' => Str::random(10),

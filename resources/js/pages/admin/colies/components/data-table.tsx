@@ -13,7 +13,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -24,25 +23,27 @@ import {
 } from "@/components/ui/table"
 import { DataTablePagination } from "./Pagination"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, FileDown, History, PackagePlus, Printer, Search } from 'lucide-react'
-
-import { useState } from "react"
+import { ChevronDown, FileDown, History, PackagePlus, Printer } from 'lucide-react'
 import { router, usePage } from "@inertiajs/react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { FilterPopover } from "./filter"
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  paginationLinks: { url: string | null; label: string; active: boolean }[];
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[],
+    colies_count?: number;
+    statuses?: {
+        id: string;
+        status: string;
+        backgroundColorHex: string;
+        TextColorHex: string;
+    }[];
+    selectedFilters: string[];
+    paginationLinks: { url: string | null; label: string; active: boolean }[];
 }
 
-export function DataTable<TData, TValue>({ columns, data, paginationLinks }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, colies_count, statuses, selectedFilters, paginationLinks }: DataTableProps<TData, TValue>) {
   const { search } = usePage().props
-  const [query, setQuery] = useState<string>(typeof search === 'string' ? search : "")
-
-  const handleSearch = () => {
-    router.get(route("admin.colies"), { search: query }, { preserveScroll: true, preserveState: true })
-  }
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -72,7 +73,14 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
     <>
       {/* Header */}
       <div className="flex flex-row flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Liste des colies</h1>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Liste des colies
+            </h1>
+            <span className="text-sm font-medium px-2.5 py-1.5 rounded bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
+                {colies_count}
+            </span>
+        </div>
 
         <Popover>
             <PopoverTrigger asChild>
@@ -119,29 +127,16 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
                 ))}
             </PopoverContent>
         </Popover>
-
       </div>
 
-      {/* ---- Table ------ */}
+      {/* Table */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm mt-6">
-        {/* ---- Search ------ */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleSearch()
-          }}
-          className="flex flex-row flex-wrap items-center justify-between gap-4 p-3 border border-b-gray-300 dark:border-b-gray-700 bg-white dark:bg-zinc-950"
-        >
-          <Input
-            placeholder="Chercher ici..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full sm:w-auto flex-1 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-transparent"
-          />
-          <Button type="submit" className="bg-zinc-900 text-white hover:bg-zinc-700 dark:hover:bg-zinc-800 whitespace-nowrap">
-            <Search />
-          </Button>
-        </form>
+        {/* Search and Filter - Now handled entirely by FilterPopover */}
+        <FilterPopover
+          statuses={statuses}
+          selectedFilters={selectedFilters}
+          currentSearch={typeof search === 'string' ? search : ""}
+        />
 
         <Table className="w-full">
           <TableHeader className="bg-gray-100 dark:bg-neutral-950">
@@ -178,7 +173,7 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
         </Table>
       </div>
 
-      {/* ---- Pagination & Selected Rows ------ */}
+      {/* Pagination */}
       <div className="mt-2 flex items-center justify-between space-x-1 py-2 bg-white dark:bg-zinc-900 rounded-md shadow-sm">
         <div className="ml-2">
           <DataTablePagination paginationLinks={paginationLinks} />
