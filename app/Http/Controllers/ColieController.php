@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreColieRequest;
 use App\Http\Requests\UpdateColieRequest;
 use App\Models\CommunePrice;
+use ArPHP\I18N\Arabic;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Colie;
 use App\Models\Communes;
@@ -52,7 +54,7 @@ class ColieController extends Controller
         $communes = Communes::select('id', 'commune_name', 'wilaya_id')->get();
         $statuses = Status::all();
 
-        $colies = $query->paginate(10)->appends([
+        $colies = $query->paginate(2)->appends([
             'search' => $request->input('search'),
             'statuses' => $request->input('statuses', [])
         ]);
@@ -393,6 +395,98 @@ class ColieController extends Controller
 
         $colie->delete();
         return redirect()->route('admin.colies')->with('success', 'Colis supprimé avec succès.');
+    }
+
+
+
+
+
+    public function generateBordereau(Colie $colie)
+    {
+        $colie->load([
+            'wilaya',
+            'commune',
+            'status',
+            'payment',
+            'exchangeReturn',
+            'exchangedColies',
+            'livreur',
+        ]);
+
+        // Render the Blade view to HTML
+        $html = view('pdf.bordereau', compact('colie'))->render();
+
+        // Arabic shaping
+        $arabic = new Arabic();
+        $positions = $arabic->arIdentify($html);
+
+        for ($i = count($positions) - 1; $i >= 0; $i -= 2) {
+            $substr = substr($html, $positions[$i - 1], $positions[$i] - $positions[$i - 1]);
+            $shaped = $arabic->utf8Glyphs($substr);
+            $html = substr_replace($html, $shaped, $positions[$i - 1], $positions[$i] - $positions[$i - 1]);
+        }
+
+        // Generate the PDF from the processed HTML
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->setOption('defaultFont', value: 'DejaVu Sans')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        return $pdf->stream("bordereau-{$colie->tracking}.pdf");
+    }
+
+    public function generateMultipleBordereaux(Request $request)
+    {
+        $request->validate([
+            'selectedIds' => 'required|array',
+            'selectedIds.*' => 'string|max:255',
+            'search' => 'nullable|string|max:255',
+            'statuses' => 'nullable|array',
+            'statuses.*' => 'string|exists:statuses,id',
+        ]);
+
+        $selectedIds = $request->input('selectedIds', []);
+
+        if (empty($selectedIds)) {
+            return back()->with('error', 'Aucun colis sélectionné.');
+        }
+
+        // Fetch colies
+        if ($selectedIds[0] === 'ALL') {
+            $query = $this->buildColieQuery($request);
+            $colies = $query->limit(200)->get();
+        } else {
+            $colies = Colie::with([
+                'wilaya', 'commune', 'status', 'payment', 'exchangeReturn', 'exchangedColies', 'livreur',
+            ])->whereIn('id', $selectedIds)->get();
+        }
+
+        if ($colies->isEmpty()) {
+            return back()->with('error', 'Aucun colis trouvé.');
+        }
+
+        // Render view to HTML
+        $html = view('pdf.bordereaux-multiple', compact('colies'))->render();
+
+        // Arabic shaping
+        $arabic = new Arabic();
+        $positions = $arabic->arIdentify($html);
+
+        for ($i = count($positions) - 1; $i >= 0; $i -= 2) {
+            $substr = substr($html, $positions[$i - 1], $positions[$i] - $positions[$i - 1]);
+            $shaped = $arabic->utf8Glyphs($substr);
+            $html = substr_replace($html, $shaped, $positions[$i - 1], $positions[$i] - $positions[$i - 1]);
+        }
+
+        // Generate the PDF
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        return $pdf->stream("bordereaux-multiples.pdf");
     }
 
 }

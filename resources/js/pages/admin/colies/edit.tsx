@@ -83,8 +83,19 @@ interface CreateColisProps {
 
 const formSchema = z.object({
   fullName: z.string().trim().min(2, "Le nom complet doit contenir au moins 2 caractères"),
-  phone: z.string().trim().min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres")
-    .regex(/^[0-9]+$/, "Le numéro de téléphone ne doit contenir que des chiffres"),
+  phone: z.string()
+  .refine((val) => {
+    const numbers = val.split(",").map(n => n.trim());
+    return numbers.every(n => /^[0-9]+$/.test(n));
+  }, {
+    message: "Chaque numéro doit contenir uniquement des chiffres",
+  })
+  .refine((val) => {
+    const numbers = val.split(",").map(n => n.trim());
+    return numbers.every(n => n.length >= 10);
+  }, {
+    message: "Chaque numéro doit contenir au moins 10 chiffres",
+  }),
   wilaya: z.string().trim().min(1, "La wilaya est requise"),
   commune: z.string().trim().min(1, "La commune est requise"),
   adress: z.string().min(1, "L'adresse est requise"),
@@ -266,10 +277,10 @@ export default function EditColis({
                           placeholder="Téléphone"
                           inputMode="tel"
                           onChange={(e) => {
-                            const value = e.target.value;
-                            if (/^[0-9]*$/.test(value)) {
-                              field.onChange(value);
-                            }
+                            const rawValue = e.target.value.replace(/\D/g, ""); // remove non-digits
+                            const chunks = rawValue.match(/.{1,10}/g) || [];
+                            const formatted = chunks.join(",");
+                            field.onChange(formatted);
                           }}
                         />
                       </FormControl>

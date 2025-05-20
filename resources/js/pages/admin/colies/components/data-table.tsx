@@ -27,6 +27,8 @@ import { ChevronDown, FileDown, History, PackagePlus, Printer } from 'lucide-rea
 import { router, usePage } from "@inertiajs/react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FilterPopover } from "./filter"
+import { useFilters } from "@/contexts/FilterContext"
+import { toast } from "sonner"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -42,8 +44,10 @@ interface DataTableProps<TData, TValue> {
     paginationLinks: { url: string | null; label: string; active: boolean }[];
 }
 
-export function DataTable<TData, TValue>({ columns, data, colies_count, statuses, selectedFilters, paginationLinks }: DataTableProps<TData, TValue>) {
-  const { search } = usePage().props
+export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_count, statuses, selectedFilters, paginationLinks }: DataTableProps<TData, TValue>) {
+  const { searchFilter } = usePage().props
+
+  const { searchValue, setSearchValue } = useFilters();
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -102,7 +106,26 @@ export function DataTable<TData, TValue>({ columns, data, colies_count, statuses
                 {
                     icon: Printer,
                     label: "Imprimer",
-                    onClick: () => router.get(route("admin.colies.export")),
+                    onClick: () => {
+                      if (selectedIds.length === 0) {
+                        toast.success({
+                          title: "Aucun colis sélectionné",
+                          description: "Veuillez sélectionner au moins un colis pour générer le bordereau.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }else{
+                        const params = new URLSearchParams({
+                            search: searchValue ?? '',
+                          });
+
+                          selectedIds.forEach(id => params.append('selectedIds[]', id));
+                          selectedFilters.forEach(status => params.append('statuses[]', status));
+
+                          const url = route('admin.colies.bordereaux') + '?' + params.toString();
+                          window.open(url, '_blank');
+                      }
+                    }
                 },
                 {
                     icon: History,
@@ -135,7 +158,7 @@ export function DataTable<TData, TValue>({ columns, data, colies_count, statuses
         <FilterPopover
           statuses={statuses}
           selectedFilters={selectedFilters}
-          currentSearch={typeof search === 'string' ? search : ""}
+          currentSearch={typeof searchFilter === 'string' ? searchFilter : ""}
         />
 
         <Table className="w-full">

@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { Table, type ColumnDef, type Row } from '@tanstack/react-table';
 import { Button } from "@/components/ui/button";
-import { Trash, Edit, Copy, Clock, Check, RefreshCw, ArrowRightLeft, X, Eye, CalendarDays, Package } from "lucide-react";
+import { Trash, Edit, Copy, Clock, Check, RefreshCw, ArrowRightLeft, X, Eye, CalendarDays, Package, Printer } from "lucide-react";
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,7 +20,7 @@ import { DataTable } from './components/data-table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { statusIcons } from './components/statusIcons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -87,9 +87,7 @@ interface ColiesProps {
 
 
 
-
-
-export default function Colies({ colies , statuses  ,  selectedFilters ,  colies_count }: ColiesProps) {
+export default function Colies({ colies , statuses  , selectedFilters ,  colies_count }: ColiesProps) {
 
 
 const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -103,7 +101,6 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
           const allSelectedOnPage = currentPageIds.every((id: string) => selectedIds.has(id));
           const someSelectedOnPage = currentPageIds.some((id: string) => selectedIds.has(id)) && !allSelectedOnPage;
           const allItemsSelected = selectedIds.has('ALL'); // Check if "ALL" is selected
-
 
           return (
             <div className="flex justify-center items-center mr-4">
@@ -263,6 +260,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
           const tracking = row.getValue("tracking") as string;
           const isExchange = row.original.id_exchange_return !== null;
           const hasExchange = row.original.has_exchange;
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           const [isCopied, setIsCopied] = useState(false);
 
           const handleCopy = () => {
@@ -469,8 +467,6 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
         };
 
 
-        const date = new Date(colie.created_at);
-
 
         return (
             <div className="flex  items-center space-x-2">
@@ -558,6 +554,18 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
                 </PopoverContent>
               </Popover>
 
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                    onClick={()=>{window.open(route("admin.colies.bordereau", colie.id), '_blank')}}
+                  >
+                    <Printer />
+                </Button>
+
+
+
               { (!colie.id_exchange_return && colie.status.status === 'En préparation') && (
                 <>
                   <Button
@@ -597,6 +605,11 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
     },
   ];
 
+
+//   useEffect(() => {
+//     console.log(selectedIds);
+//   }, [selectedIds]);
+
   return (
     <AppLayout>
       <Head title="Liste des colies" />
@@ -611,6 +624,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
             statuses={statuses}
             selectedFilters={selectedFilters}
             colies_count={colies_count}
+            selectedIds={selectedIds}
             paginationLinks={colies.links || []}
           />
         </div>

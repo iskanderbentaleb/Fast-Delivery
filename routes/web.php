@@ -38,6 +38,8 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::delete('colis/{colie}', [ColieController::class, 'destroy'])->name('admin.colies.destroy');
     Route::get('colis/edit/{colie}', [ColieController::class, 'edit'])->name('admin.colies.edit');
     Route::put('colis/colies/{colie}', [ColieController::class, 'update'])->name('admin.colies.update');
+    Route::get('colis/{colie}/bordereau', [ColieController::class, 'generateBordereau'])->name('admin.colies.bordereau');
+    Route::get('colis/bordereaux', [ColieController::class, 'generateMultipleBordereaux'])->name('admin.colies.bordereaux');
 
 
 });
