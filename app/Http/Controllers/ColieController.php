@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Exports\ColiesExport;
 use App\Http\Requests\StoreColieRequest;
 use App\Http\Requests\UpdateColieRequest;
 use App\Models\CommunePrice;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ColieController extends Controller
 {
@@ -54,7 +56,7 @@ class ColieController extends Controller
         $communes = Communes::select('id', 'commune_name', 'wilaya_id')->get();
         $statuses = Status::all();
 
-        $colies = $query->paginate(2)->appends([
+        $colies = $query->paginate(10)->appends([
             'search' => $request->input('search'),
             'statuses' => $request->input('statuses', [])
         ]);
@@ -229,10 +231,6 @@ class ColieController extends Controller
         return $yearDiff . $dayOfYear . $sequence;
     }
 
-
-    // /**
-    //  * Show the form for editing the specified colie.
-    //  */
     public function edit(Request $request, Colie $colie)
     {
         $wilayas = Wilaya::select('id', 'wilaya_name')->get();
@@ -272,9 +270,6 @@ class ColieController extends Controller
         ]);
     }
 
-    // /**
-    //  * Update the specified colie in storage.
-    //  */
     public function update(UpdateColieRequest $request, Colie $colie)
     {
         $validated = $request->validated();
@@ -379,10 +374,6 @@ class ColieController extends Controller
         }
     }
 
-
-    // /**
-    //  * Remove the specified colie from storage.
-    //  */
     public function destroy(Colie $colie)
     {
         if (
@@ -396,10 +387,6 @@ class ColieController extends Controller
         $colie->delete();
         return redirect()->route('admin.colies')->with('success', 'Colis supprimé avec succès.');
     }
-
-
-
-
 
     public function generateBordereau(Colie $colie)
     {
@@ -488,6 +475,45 @@ class ColieController extends Controller
 
         return $pdf->stream("bordereaux-multiples.pdf");
     }
+
+    public function export(Request $request)
+    {
+        $request->validate([
+            'selectedIds' => 'required|array',
+            'selectedIds.*' => 'string|max:255',
+            'search' => 'nullable|string|max:255',
+            'statuses' => 'nullable|array',
+            'statuses.*' => 'string|exists:statuses,id',
+        ]);
+
+        $selectedIds = $request->input('selectedIds', []);
+
+        if (empty($selectedIds)) {
+            return back()->with('error', 'Aucun colis sélectionné.');
+        }
+
+        // Fetch colies
+        if ($selectedIds[0] === 'ALL') {
+            $query = $this->buildColieQuery($request)
+                ->orderBy('created_at', 'desc');
+
+            $colies = $query->get();
+        } else {
+            $colies = Colie::with([
+                'wilaya', 'commune', 'status', 'payment', 'exchangeReturn', 'exchangedColies', 'livreur',
+            ])
+            ->whereIn('id', $selectedIds)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        }
+
+        if ($colies->isEmpty()) {
+            return back()->with('error', 'Aucun colis trouvé.');
+        }
+
+        return Excel::download(new ColiesExport($colies), 'colies.xlsx');
+    }
+
 
 }
 

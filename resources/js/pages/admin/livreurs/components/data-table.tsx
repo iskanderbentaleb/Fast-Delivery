@@ -106,7 +106,6 @@ export function DataTable<TData, TValue>({ columns, data, paginationLinks }: Dat
             </form>
 
 
-
             <Table className="w-full">
                 {/* Table Header */}
                 <TableHeader className="bg-gray-100 dark:bg-neutral-950">

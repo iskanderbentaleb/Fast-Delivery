@@ -40,6 +40,7 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::put('colis/colies/{colie}', [ColieController::class, 'update'])->name('admin.colies.update');
     Route::get('colis/{colie}/bordereau', [ColieController::class, 'generateBordereau'])->name('admin.colies.bordereau');
     Route::get('colis/bordereaux', [ColieController::class, 'generateMultipleBordereaux'])->name('admin.colies.bordereaux');
+    Route::get('colis/export', [ColieController::class, 'export'])->name('admin.colies.export');
 
 
 });

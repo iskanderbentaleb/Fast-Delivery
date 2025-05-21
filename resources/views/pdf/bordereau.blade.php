@@ -129,6 +129,7 @@
             padding:5px;
         }
 
+
         /* Barcode Styles */
         .barcode-section {
             border-top: 2px dashed var(--border-color);
@@ -264,10 +265,10 @@
                 <div class="address-title">
                     Expéditeur
                     @if ($colie->has_exchange)
-                        <div class="address-title-echange-send" style="background: var(--secondary-color); display: inline; float:right; padding:5px;">AVEC ÉCHANGE</div>
+                        <div class="address-title-echange-send">AVEC ÉCHANGE</div>
                     @endif
                     @if ($colie->id_exchange_return)
-                        <div class="address-title-echange-return" style="background: var(--echange-color); display: inline; float:right; padding:5px;">ÉCHANGE COLLECTÉ</div>
+                        <div class="address-title-echange-return">ÉCHANGE COLLECTÉ</div>
                     @endif
                 </div>
                 <div class="address-content">
@@ -288,7 +289,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div class="barcode-section">
