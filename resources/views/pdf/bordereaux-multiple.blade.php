@@ -317,7 +317,7 @@
         <div class="signature-declaration-container">
             <div class="declaration-box">
                 <div class="declaration-title">Déclaration de l'expéditeur</div>
-                Je soussigné(e), {{ Auth::user()->name ?? 'l\'expéditeur' }}, certifie que les détails déclarés sur ce bordereau sont corrects et que le colis ne contient aucun produit dangereux ou interdit par la loi. Je déclare avoir lu et approuvé les conditions générales de transport.
+                Je soussigné(e), {{ Auth::user()->storename ?? 'l\'expéditeur' }}, certifie que les détails déclarés sur ce bordereau sont corrects et que le colis ne contient aucun produit dangereux ou interdit par la loi. Je déclare avoir lu et approuvé les conditions générales de transport.
             </div>
 
             <div class="signature-container">

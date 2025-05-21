@@ -1,3 +1,4 @@
+// In your parent component (DataTable.tsx)
 "use client"
 import * as React from "react"
 import {
@@ -23,13 +24,14 @@ import {
 } from "@/components/ui/table"
 import { DataTablePagination } from "./Pagination"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, FileDown, History, PackagePlus, Printer } from 'lucide-react'
+import { ChevronDown, FileDown, HistoryIcon, PackagePlus, Printer } from 'lucide-react'
 import { router, usePage } from "@inertiajs/react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FilterPopover } from "./filter"
 import { useFilters } from "@/contexts/FilterContext"
 import { toast } from "sonner"
-import { useStatusSheet } from "../status/StatusSheet"
+import { StatusSheet } from "../components/StatusSheet"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -43,13 +45,21 @@ interface DataTableProps<TData, TValue> {
     }[];
     selectedFilters: string[];
     paginationLinks: { url: string | null; label: string; active: boolean }[];
+    selectedIds: string[]; // Added missing prop
 }
 
-export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_count, statuses, selectedFilters, paginationLinks }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+    columns,
+    data,
+    selectedIds,
+    colies_count,
+    statuses,
+    selectedFilters,
+    paginationLinks
+}: DataTableProps<TData, TValue>) {
   const { searchFilter } = usePage().props
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { searchValue, setSearchValue } = useFilters();
-  const { open, openSheet, SheetComponent } = useStatusSheet()
 
 
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -76,6 +86,55 @@ export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_c
     },
   })
 
+  // Memoize the actions to prevent unnecessary re-renders
+  const actions = React.useMemo(() => [
+    {
+      icon: PackagePlus,
+      label: "Ajouter",
+      onClick: () => router.get(route("admin.colies.create")),
+    },
+    {
+      icon: Printer,
+      label: "Imprimer",
+      onClick: () => {
+        if (Array.from(selectedIds).length === 0) {
+          toast.error("Aucun colis sélectionné , Veuillez sélectionner au moins un colis pour générer le bordereau.");
+          return;
+        } else {
+          const params = new URLSearchParams({
+            search: searchValue ?? '',
+          });
+
+          selectedIds.forEach(id => params.append('selectedIds[]', id));
+          selectedFilters.forEach(status => params.append('statuses[]', status));
+
+          const url = route('admin.colies.bordereaux') + '?' + params.toString();
+          window.open(url, '_blank');
+        }
+      }
+    },
+    {
+      icon: FileDown,
+      label: "Exporter",
+      onClick: () => {
+        if (Array.from(selectedIds).length === 0) {
+          toast.error("Aucun colis sélectionné. Veuillez en sélectionner au moins un pour générer le fichier Excel.");
+          return;
+        } else {
+          const params = new URLSearchParams({
+            search: searchValue ?? '',
+          });
+
+          selectedIds.forEach(id => params.append('selectedIds[]', id));
+          selectedFilters.forEach(status => params.append('statuses[]', status));
+
+          const url = route('admin.colies.export') + '?' + params.toString();
+          window.open(url, '_blank');
+        }
+      }
+    },
+  ], [selectedIds, searchValue, selectedFilters])
+
   return (
     <>
       {/* Header */}
@@ -100,66 +159,7 @@ export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_c
             </PopoverTrigger>
 
             <PopoverContent className="w-52 p-2 space-y-1 dark:bg-zinc-950 shadow-xl border border-zinc-200 dark:border-zinc-800 rounded-xl">
-                {[
-                {
-                    icon: PackagePlus,
-                    label: "Ajouter",
-                    onClick: () => router.get(route("admin.colies.create")),
-                },
-                {
-                    icon: Printer,
-                    label: "Imprimer",
-                    onClick: () => {
-                      if (selectedIds.length === 0) {
-                        toast.success({
-                          title: "Aucun colis sélectionné",
-                          description: "Veuillez sélectionner au moins un colis pour générer le bordereau.",
-                          variant: "destructive",
-                        });
-                        return;
-                      }else{
-                        const params = new URLSearchParams({
-                            search: searchValue ?? '',
-                          });
-
-                          selectedIds.forEach(id => params.append('selectedIds[]', id));
-                          selectedFilters.forEach(status => params.append('statuses[]', status));
-
-                          const url = route('admin.colies.bordereaux') + '?' + params.toString();
-                          window.open(url, '_blank');
-                      }
-                    }
-                },
-                {
-                    icon: History,
-                    label: "Changer le statut",
-                    onClick: openSheet,
-                },
-                {
-                    icon: FileDown,
-                    label: "Exporter",
-                    onClick: () => {
-                      if (selectedIds.length === 0) {
-                        toast({
-                          title: "Aucun colis sélectionné",
-                          description: "Veuillez sélectionner au moins un colis pour générer le bordereau.",
-                          variant: "destructive",
-                        });
-                        return;
-                      }else{
-                        const params = new URLSearchParams({
-                            search: searchValue ?? '',
-                          });
-
-                          selectedIds.forEach(id => params.append('selectedIds[]', id));
-                          selectedFilters.forEach(status => params.append('statuses[]', status));
-
-                          const url = route('admin.colies.export') + '?' + params.toString();
-                          window.open(url, '_blank');
-                      }
-                    }
-                },
-                ].map(({ icon: Icon, label, onClick }, i) => (
+                {actions.map(({ icon: Icon, label, onClick }, i) => (
                 <Button
                     key={i}
                     variant="ghost"
@@ -170,15 +170,35 @@ export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_c
                     {label}
                 </Button>
                 ))}
+
+                {/* status chnage */}
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                        <HistoryIcon className="w-4 h-4" />
+                            Changer statut
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent
+                        side="bottom"
+                        className="w-full h-[90dvh] rounded-t-2xl p-0 flex flex-col shadow-2xl border border-border"
+                    >
+                        <StatusSheet/>
+                    </SheetContent>
+                </Sheet>
+
+
             </PopoverContent>
         </Popover>
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-700 p-2 rounded-lg shadow-sm mt-6">
-        {/* Search and Filter - Now handled entirely by FilterPopover */}
         <FilterPopover
-          statuses={statuses}
+          statuses={statuses ?? []}
           selectedFilters={selectedFilters}
           currentSearch={typeof searchFilter === 'string' ? searchFilter : ""}
         />
@@ -224,11 +244,6 @@ export function DataTable<TData, TValue>({ columns, data, selectedIds , colies_c
           <DataTablePagination paginationLinks={paginationLinks} />
         </div>
       </div>
-
-
-
-    {/* status change */}
-    <SheetComponent />
     </>
   )
 }
