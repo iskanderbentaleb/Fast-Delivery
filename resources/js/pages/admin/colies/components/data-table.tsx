@@ -176,17 +176,17 @@ export function DataTable<TData, TValue>({
                     <SheetTrigger asChild>
                         <Button
                         variant="ghost"
-                        className="w-full justify-start gap-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="w-full justify-start gap-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 group"
                         >
-                        <HistoryIcon className="w-4 h-4" />
-                            Changer statut
+                        <HistoryIcon className="w-4 h-4 group-hover:text-foreground transition-colors" />
+                        Changer statut
                         </Button>
                     </SheetTrigger>
                     <SheetContent
                         side="bottom"
-                        className="w-full h-[90dvh] rounded-t-2xl p-0 flex flex-col shadow-2xl border border-border"
+                        className="w-full h-[93dvh] rounded-t-2xl p-0 flex flex-col shadow-2xl bg-background border border-border/50 backdrop-blur-lg"
                     >
-                        <StatusSheet/>
+                        <StatusSheet statuses={statuses} />
                     </SheetContent>
                 </Sheet>
 
