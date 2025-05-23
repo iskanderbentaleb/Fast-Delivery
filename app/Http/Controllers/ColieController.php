@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Colie;
 use App\Models\Communes;
+use App\Models\Reason;
 use App\Models\Status;
 use App\Models\User;
 use App\Models\Wilaya;
@@ -55,6 +56,7 @@ class ColieController extends Controller
 
         $communes = Communes::select('id', 'commune_name', 'wilaya_id')->get();
         $statuses = Status::all();
+        $reasons = Reason::all();
 
         $colies = $query->paginate(10)->appends([
             'search' => $request->input('search'),
@@ -66,7 +68,8 @@ class ColieController extends Controller
             'colies_count' => $colies->total(),
             'communes' => $communes,
             'statuses' => $statuses,
-            'search' => $request->input('search'),
+            'reasons' => $reasons ,
+            'search' => $request->input('search') ,
             'selectedFilters' => $request->input('statuses', []),
         ]);
     }

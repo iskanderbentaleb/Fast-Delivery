@@ -11,21 +11,27 @@ interface Package {
   id: string;
   status: string;
   note: string;
+  reason?: string;
 }
-
 interface Status {
   id: string;
   status: string;
   backgroundColorHex: string;
   TextColorHex: string;
 }
-
-interface StatusSheetProps {
-  statuses: Status[];
+interface reason {
+  id: string;
+  reason: string;
 }
 
-export function StatusSheet({ statuses }: StatusSheetProps) {
+interface SheetProps {
+  statuses: Status[];
+  reasons: reason[];
+}
+
+export function StatusSheet({ statuses  , reasons}: SheetProps) {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedReason, setSelectedReason] = useState<string>('');
   const [note, setNote] = useState('');
   const [search, setSearch] = useState('');
   const [packages, setPackages] = useState<Package[]>([]);
@@ -36,11 +42,19 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
     audio.play();
   };
 
-
   const validatePackage = (): string | null => {
     if (!selectedStatus) {
       playSound('/sounds/error.mp3');
       return 'Veuillez sélectionner un statut';
+    }
+
+    if (selectedStatus && !selectedReason) {
+        const showReason = statuses.find((s) => s.id === selectedStatus)?.status === 'Tentative échouée' ||
+                            statuses.find((s) => s.id === selectedStatus)?.status === 'Échec livraison';
+        if (showReason) {
+            playSound('/sounds/error.mp3');
+            return 'Veuillez sélectionner une raison';
+        }
     }
 
     if (!search.trim()) {
@@ -68,6 +82,7 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
     setPackages(prev => [{
       id: search,
       status: selectedStatus,
+      reason: selectedReason,
       note: note
     }, ...prev]);
 
@@ -75,6 +90,7 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
     setSearch('');
     setError('');
     setNote('');
+    setSelectedReason('');
   };
 
   const handleRemovePackage = (pkgId: string) => {
@@ -87,11 +103,18 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
     ));
   };
 
+  const handlePackageReasonChange = (pkgId: string, newReason: string) => {
+    setPackages(prev => prev.map(pkg =>
+      pkg.id === pkgId ? { ...pkg, reason : newReason } : pkg
+    ));
+  };
+
   const handlePackageNoteChange = (pkgId: string, newNote: string) => {
     setPackages(prev => prev.map(pkg =>
       pkg.id === pkgId ? { ...pkg, note: newNote } : pkg
     ));
   };
+
 
   return (
     <>
@@ -108,7 +131,7 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
               <SheetDescription className="text-sm leading-relaxed text-muted-foreground/90 max-w-2xl">
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-destructive/10 text-destructive rounded-md">
                   <AlertTriangle className="w-4 h-4" />
-                  <strong>Action critique:</strong> Le statut « Prêt à expédier » est permanent
+                  <strong>Action sensible :</strong> Veuillez faire preuve de prudence lors de la modification du statut du colis.
                 </span>
               </SheetDescription>
             </div>
@@ -119,22 +142,25 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
         <div className="px-6 py-8 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
             <div className="space-y-6">
-              <StatusSelect
-                statuses={statuses}
-                value={selectedStatus}
-                onValueChange={setSelectedStatus}
-              />
+                <StatusSelect
+                    statuses={statuses}
+                    reasons={reasons}
+                    value_statuses={selectedStatus}
+                    value_reasons={selectedReason}
+                    onValueChange={setSelectedStatus}
+                    onReasonChange={setSelectedReason}
+                />
 
-              <NoteInput note={note} onNoteChange={setNote} />
+                <NoteInput note={note} onNoteChange={setNote} />
 
-              <PackageSearch
-                search={search}
-                error={error}
-                onSearchChange={setSearch}
-                onAddPackage={handleAddPackage}
-                selectedStatus={selectedStatus}
-                setError={setError}
-              />
+                <PackageSearch
+                    search={search}
+                    error={error}
+                    onSearchChange={setSearch}
+                    onAddPackage={handleAddPackage}
+                    selectedStatus={selectedStatus}
+                    setError={setError}
+                />
             </div>
 
             <div className="hidden lg:block absolute left-1/2 top-0 h-full w-px bg-border/20" />
@@ -146,8 +172,10 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
                   <PackageList
                     packages={packages}
                     statuses={statuses}
+                    reasons={reasons}
                     onRemove={handleRemovePackage}
                     onStatusChange={handlePackageStatusChange}
+                    onReasonChange={handlePackageReasonChange}
                     onNoteChange={handlePackageNoteChange}
                   />
                 </div>
@@ -178,13 +206,54 @@ export function StatusSheet({ statuses }: StatusSheetProps) {
 }
 
 // Extracted Components
-function StatusSelect({ statuses, value, onValueChange }: {
-  statuses: Status[]
-  value: string
-  onValueChange: (value: string) => void
+function StatusSelect({
+  statuses,
+  reasons,
+  value_statuses,
+  value_reasons,
+  onValueChange,
+  onReasonChange,
+}: {
+  statuses: Status[];
+  reasons: reason[];
+  value_statuses: string;
+  value_reasons:string;
+  onValueChange: (value: string) => void;
+  onReasonChange: (value: string) => void;
 }) {
+  const showReason =
+    statuses.find((s) => s.id === value_statuses)?.status === 'Tentative échouée' ||
+    statuses.find((s) => s.id === value_statuses)?.status === 'Échec livraison';
+
   return (
     <div className="space-y-4">
+      <StatusDropdown
+        statuses={statuses}
+        value={value_statuses}
+        onValueChange={onValueChange}
+      />
+      {showReason && (
+        <ReasonDropdown
+        reasons={reasons}
+        value={value_reasons}
+        onValueChange={onReasonChange}
+        />
+      )}
+    </div>
+  );
+}
+
+function StatusDropdown({
+  statuses,
+  value,
+  onValueChange,
+}: {
+  statuses: Status[];
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <>
       <SectionLabel number={1} label="Sélection du statut" />
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className="h-12">
@@ -192,15 +261,44 @@ function StatusSelect({ statuses, value, onValueChange }: {
         </SelectTrigger>
         <SelectContent className="ml-5">
           {statuses.map((status) => (
-            <SelectItem key={status.id} value={status.id} className="text-sm px-4 py-3" >
+            <SelectItem key={status.id} value={status.id} className="text-sm px-4 py-3">
               <div className="ml-4">{status.status}</div>
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-    </div>
-  )
+    </>
+  );
 }
+
+function ReasonDropdown({
+  reasons,
+  value,
+  onValueChange,
+}: {
+  reasons: reason[];
+  value: string,
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <SectionLabel number="1 - 2" label="Raison de l'échec" />
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="h-12">
+          <SelectValue placeholder="Sélectionner une raison" />
+        </SelectTrigger>
+        <SelectContent>
+          {reasons.map((r) => (
+            <SelectItem key={r.id} value={r.id} className="text-sm px-4 py-2">
+              <div className="ml-4">{r.reason}</div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 
 function NoteInput({ note, onNoteChange }: {
   note: string
@@ -262,11 +360,13 @@ function PackageSearch({ search, error, onSearchChange, onAddPackage, selectedSt
   )
 }
 
-function PackageList({ packages, statuses, onRemove, onStatusChange, onNoteChange }: {
+function PackageList({ packages, statuses, reasons, onRemove, onStatusChange, onReasonChange, onNoteChange }: {
   packages: Package[]
   statuses: Status[]
+  reasons: reason[]
   onRemove: (id: string) => void
   onStatusChange: (id: string, status: string) => void
+  onReasonChange: (id: string, reason: string) => void // Added prop
   onNoteChange: (id: string, note: string) => void
 }) {
   return (
@@ -285,8 +385,10 @@ function PackageList({ packages, statuses, onRemove, onStatusChange, onNoteChang
                 key={pkg.id}
                 pkg={pkg}
                 statuses={statuses}
+                reasons={reasons}
                 onRemove={onRemove}
                 onStatusChange={onStatusChange}
+                onReasonChange={onReasonChange}
                 onNoteChange={onNoteChange}
               />
             ))}
@@ -301,14 +403,18 @@ function PackageList({ packages, statuses, onRemove, onStatusChange, onNoteChang
   )
 }
 
-function PackageAccordionItem({ pkg, statuses, onRemove, onStatusChange, onNoteChange }: {
+function PackageAccordionItem({ pkg, statuses, reasons, onRemove, onStatusChange, onReasonChange, onNoteChange }: {
   pkg: Package
   statuses: Status[]
+  reasons: reason[]
   onRemove: (id: string) => void
   onStatusChange: (id: string, status: string) => void
+  onReasonChange: (id: string, reason: string) => void // Corrected prop type
   onNoteChange: (id: string, note: string) => void
 }) {
   const status = statuses.find(s => s.id === pkg.status);
+  const selectedStatus = statuses.find(s => s.id === pkg.status);
+  const showReason = selectedStatus?.status === "Tentative échouée" || selectedStatus?.status === "Échec livraison";
 
   return (
     <AccordionItem value={pkg.id} className="border-b-0">
@@ -332,33 +438,57 @@ function PackageAccordionItem({ pkg, statuses, onRemove, onStatusChange, onNoteC
             <Trash2 className="w-5 h-5" />
           </Button>
         </div>
-        <AccordionContent className="pt-3 px-0 pb-0">
-          <div className="space-y-3 p-5">
-            <Select
-              value={pkg.status}
-              onValueChange={(value) => onStatusChange(pkg.id, value)}
-            >
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Statut non défini" />
-              </SelectTrigger>
-              <SelectContent>
-                {statuses.map((status) => (
-                  <SelectItem
-                    key={status.id}
-                    value={status.id}
-                    className="text-sm px-4 py-2"
-                  >
-                    <div className="ml-5">{status.status}</div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <NoteField
-              note={pkg.note}
-              onChange={(value) => onNoteChange(pkg.id, value)}
-            />
-          </div>
-        </AccordionContent>
+            <AccordionContent className="pt-3 px-0 pb-0">
+            <div className="space-y-3 p-5">
+                <Select
+                value={pkg.status}
+                onValueChange={(value) => onStatusChange(pkg.id, value)}
+                >
+                <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Statut non défini" />
+                </SelectTrigger>
+                <SelectContent>
+                    {statuses.map((status) => (
+                    <SelectItem
+                        key={status.id}
+                        value={status.id}
+                        className="text-sm px-4 py-2"
+                    >
+                        <div className="ml-5">{status.status}</div>
+                    </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+
+                {/* Conditionally show reason field */}
+                {showReason && (
+                    <Select
+                    value={pkg.reason || ""}
+                    onValueChange={(value) => onReasonChange(pkg.id, value)}
+                    >
+                    <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Sélectionner une raison" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {reasons.map((reason) => (
+                        <SelectItem
+                            key={reason.id}
+                            value={reason.id}
+                            className="text-sm px-4 py-2"
+                        >
+                            <div className="ml-4">{reason.reason}</div>
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                )}
+
+                <NoteField
+                note={pkg.note}
+                onChange={(value) => onNoteChange(pkg.id, value)}
+                />
+            </div>
+            </AccordionContent>
       </div>
     </AccordionItem>
   )

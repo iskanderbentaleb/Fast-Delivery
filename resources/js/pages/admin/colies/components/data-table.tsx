@@ -43,6 +43,10 @@ interface DataTableProps<TData, TValue> {
         backgroundColorHex: string;
         TextColorHex: string;
     }[];
+    reasons?: {
+        id: string;
+        reason: string;
+    }
     selectedFilters: string[];
     paginationLinks: { url: string | null; label: string; active: boolean }[];
     selectedIds: string[]; // Added missing prop
@@ -54,6 +58,7 @@ export function DataTable<TData, TValue>({
     selectedIds,
     colies_count,
     statuses,
+    reasons,
     selectedFilters,
     paginationLinks
 }: DataTableProps<TData, TValue>) {
@@ -66,6 +71,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+
 
   const table = useReactTable({
     data,
@@ -186,7 +192,7 @@ export function DataTable<TData, TValue>({
                         side="bottom"
                         className="w-full h-[93dvh] rounded-t-2xl p-0 flex flex-col shadow-2xl bg-background border border-border/50 backdrop-blur-lg"
                     >
-                        <StatusSheet statuses={statuses} />
+                        <StatusSheet statuses={statuses} reasons={reasons} />
                     </SheetContent>
                 </Sheet>
 

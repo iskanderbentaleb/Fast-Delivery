@@ -63,31 +63,35 @@ type Colie = {
 };
 
 interface ColiesProps {
-  colies: {
-    data: Colie[];
-    links: { url: string | null; label: string; active: boolean }[];
-  };
-  colies_count: number;
-  selectedFilters: string[];
-  statuses: {
-        id: string;
-        status: string;
-        backgroundColorHex: string;
-        TextColorHex: string;
-  }[];
-  stats?: {
-    total: number;
-    delivered: number;
-    pending: number;
-    returned: number;
-  };
+    colies: {
+        data: Colie[];
+        links: { url: string | null; label: string; active: boolean }[];
+    };
+    colies_count: number;
+    selectedFilters: string[];
+    statuses: {
+            id: string;
+            status: string;
+            backgroundColorHex: string;
+            TextColorHex: string;
+    }[];
+    reasons?: {
+            id: string;
+            reason: string;
+    }
+    stats?: {
+        total: number;
+        delivered: number;
+        pending: number;
+        returned: number;
+    };
 }
 
 
 
 
 
-export default function Colies({ colies , statuses  , selectedFilters ,  colies_count }: ColiesProps) {
+export default function Colies({ colies , statuses , reasons  , selectedFilters ,  colies_count }: ColiesProps) {
 
 
 const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -622,6 +626,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
             columns={columns}
             data={colies.data}
             statuses={statuses}
+            reasons={reasons}
             selectedFilters={selectedFilters}
             colies_count={colies_count}
             selectedIds={selectedIds}
