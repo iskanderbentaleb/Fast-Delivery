@@ -12,17 +12,13 @@ class Payment extends Model
     protected $table = 'payments';
 
     protected $fillable = [
-        'total_store_payment',
-        'total_courier_payment',
+        'total_client_payment',
         'total_return_fee_payment',
-        'total_damaged_payment',
+        'total_courier_delivered_payment',
+        'total_courier_net_payment',
+        'total_store_payment',
         'created_by_id',
         'livreur_id',
-        'payment_date',
-    ];
-
-    protected $casts = [
-        'payment_date' => 'date',
     ];
 
     // Relationships

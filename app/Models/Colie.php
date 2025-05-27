@@ -76,4 +76,9 @@ class Colie extends Model
     {
         return $this->belongsTo(Livreur::class, 'livreur_id');
     }
+
+    public function histories()
+    {
+        return $this->hasMany(ColieHistory::class, 'id_colie');
+    }
 }

@@ -50,7 +50,6 @@ class LivreurController extends Controller
     }
 
 
-
     /**
      * Show the form for creating a new resource.
      */
@@ -187,12 +186,14 @@ class LivreurController extends Controller
                     ->where('commune_id', $item['commune_id'])  // Updated to use commune_id
                     ->delete();
 
-                CommunePrice::create([
-                    'livreur_id' => $livreur->id,
-                    'commune_id' => $item['commune_id'],  // Updated to use commune_id
-                    'delivery_price' => $item['delivery_price'],
-                    'return_price' => $item['return_price'],
-                ]);
+                if ($item['delivery_price'] > 0 || $item['return_price'] > 0){
+                    CommunePrice::create([
+                        'livreur_id' => $livreur->id,
+                        'commune_id' => $item['commune_id'],  // Updated to use commune_id
+                        'delivery_price' => $item['delivery_price'],
+                        'return_price' => $item['return_price'],
+                    ]);
+                }
             } else {
                 // Log or handle the case where $item is not an array
                 \Log::error("Invalid item format: ", [$item]);

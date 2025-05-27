@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->decimal('total_store_payment', 10, 2)->default(0);
-            $table->decimal('total_courier_payment', 10, 2)->default(0);
+            $table->decimal('total_client_payment', 10, 2)->default(0);
             $table->decimal('total_return_fee_payment', 10, 2)->default(0);
-            $table->decimal('total_damaged_payment', 10, 2)->default(0);
+            $table->decimal('total_courier_delivered_payment', 10, 2)->default(0);
+            $table->decimal('total_courier_net_payment', 10, 2)->default(0);
+            $table->decimal('total_store_payment', 10, 2)->default(0);
+
             $table->unsignedBigInteger('created_by_id');
             $table->unsignedBigInteger('livreur_id');
-            $table->date('payment_date'); // accepted date
             $table->timestamps();
 
             $table->foreign('created_by_id')->references('id')->on('users')->onDelete('restrict');

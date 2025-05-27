@@ -10,7 +10,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, Menu, Package , Truck } from 'lucide-react';
+import { FileSpreadsheet, LayoutGrid, Menu, Package , Truck } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -55,6 +55,11 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
             title: 'Livreurs',
             url: '/admin/livreurs',
             icon: Truck,
+        },
+        {
+            title: 'Paiements',
+            url: '/admin/payments',
+            icon: FileSpreadsheet,
         },
     ]
     :

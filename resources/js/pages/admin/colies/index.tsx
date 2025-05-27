@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { Table, type ColumnDef, type Row } from '@tanstack/react-table';
 import { Button } from "@/components/ui/button";
-import { Trash, Edit, Copy, Clock, Check, RefreshCw, ArrowRightLeft, X, Eye, CalendarDays, Package, Printer } from "lucide-react";
+import { Trash, Edit, Copy, Clock, Check, RefreshCw, ArrowRightLeft, X, Eye, CalendarDays, Package, Printer, Inbox, PackageIcon, AlertCircle, ChevronDown, User, FileText, HelpCircle, Loader2, Receipt, ClipboardCheck } from "lucide-react";
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,9 +20,10 @@ import { DataTable } from './components/data-table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { statusIcons } from './components/statusIcons';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import axios from 'axios';
 
 type Colie = {
   id: string;
@@ -33,6 +34,7 @@ type Colie = {
   livreur_amount: string;
   has_exchange: boolean;
   id_exchange_return ?: string;
+  id_payment ?: string;
   id_status: string;
   client_address : string;
   external_id: string;
@@ -263,6 +265,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
         cell: ({ row }) => {
           const tracking = row.getValue("tracking") as string;
           const isExchange = row.original.id_exchange_return !== null;
+          const is_payed = row.original.id_payment !== null;
           const hasExchange = row.original.has_exchange;
           // eslint-disable-next-line react-hooks/rules-of-hooks
           const [isCopied, setIsCopied] = useState(false);
@@ -304,51 +307,63 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
                 </Tooltip>
               </TooltipProvider>
 
-              <Badge
-                variant={isExchange ? "secondary" : "default"}
-                className={cn(
-                  "font-mono flex items-center gap-2 py-2 px-3",
-                  "transition-all hover:shadow-sm",
-                  "border border-transparent hover:border-border",
-                  "max-w-full overflow-hidden"
-                )}
-              >
+            <Badge className={cn(
+                "font-mono flex items-center gap-2 py-2 px-3 rounded-lg",
+                "bg-zinc-950 dark:text-zinc-200",
+                "border border-zinc-200 dark:border-zinc-800")}>
                 <span className="truncate max-w-[120px] sm:max-w-[180px]">
-                  {tracking}
+                    {tracking}
                 </span>
 
-                {hasExchange && (
-                  <TooltipProvider>
+                {is_payed && (
+                    <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 bg-white dark:bg-zinc-900/80 text-zinc-800 dark:text-zinc-200 px-2 py-0.5 rounded-full text-xs whitespace-nowrap">
-                          <RefreshCw className="h-3 w-3" />
-                          <span>Avec échange</span>
+                        <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full text-xs">
+                            <ClipboardCheck className="h-3 w-3" />
+                            <span>Payé</span>
                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Ce colis a un échange associé</p>
-                      </TooltipContent>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Ce colis a déjà été payé.</p>
+                        </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
+                    </TooltipProvider>
+                )}
+
+                {hasExchange && (
+                    <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-full text-xs">
+                            <RefreshCw className="h-3 w-3" />
+                            <span>Avec échange</span>
+                        </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>Ce colis a un échange associé</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    </TooltipProvider>
                 )}
 
                 {isExchange && (
-                  <TooltipProvider>
+                    <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 bg-zinc-500 dark:bg-zinc-900/80 text-white dark:text-purple-200 px-2 py-0.5 rounded-full text-xs whitespace-nowrap">
-                          <ArrowRightLeft className="h-3 w-3" />
-                          <span>Échange</span>
+                        <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 px-2 py-0.5 rounded-full text-xs">
+                            <ArrowRightLeft className="h-3 w-3" />
+                            <span>Échange</span>
                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
+                        </TooltipTrigger>
+                        <TooltipContent>
                         <p>Ce colis est un échange</p>
-                      </TooltipContent>
+                        </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
+                    </TooltipProvider>
                 )}
-              </Badge>
+            </Badge>
+
             </div>
           );
         },
@@ -369,53 +384,170 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
       },
     },
     {
-      accessorKey: "status",
-      header: "Statut",
-      cell: ({ row }) => {
+    accessorKey: "status",
+    header: "Statut",
+    cell: ({ row }) => {
+        const [history, setHistory] = useState<any[]>([]);
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState("");
+        const [isOpen, setIsOpen] = useState(false);
+
+        const tracking = row.original.tracking;
         const status = row.original.status;
-        const history = row.original.status_history || [];
+
+        const fetchStatusHistory = async () => {
+        if (history.length > 0) return;
+        setLoading(true);
+        setError("");
+        try {
+            const response = await axios.get(route("admin.colies.status-history", { tracking }));
+            if (response.data.success) {
+            setHistory(response.data.data.history);
+            } else {
+            setError(response.data.message || "Erreur lors du chargement");
+            }
+        } catch {
+            setError("Erreur de connexion au serveur");
+        } finally {
+            setLoading(false);
+        }
+        };
+
+        const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (open) fetchStatusHistory();
+        };
+
+        const statusColorStyles = {
+        backgroundColor: status?.backgroundColorHex || "#f9f9f9",
+        color: status?.TextColorHex || "#000"
+        };
 
         return (
-          <Popover>
+        <Popover onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-              <Button
+            <Button
                 variant="ghost"
-                className="h-auto p-0 hover:bg-transparent hover:underline"
-              >
-                <Badge
-                variant="outline"
-                className="flex items-center space-x-1 border-none px-1.5 py-0.5"
-                style={{
-                    padding: "0.6rem 1rem",
-                    backgroundColor: status.backgroundColorHex,
-                    color: status.TextColorHex,
-                }}
-                >
-                    {statusIcons[status.status] || <Clock className="h-3.5 w-3.5" />}
-                    <span className="text-xs">{status.status}</span>
-                </Badge>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-2">
-              <div className="text-sm font-medium mb-2">Historique du statut</div>
-              <ul className="space-y-2 max-h-60 overflow-auto">
-                {history.length > 0 ? (
-                  history.map((s, i) => (
-                    <li key={i} className="flex justify-between text-sm">
-                      <span>{s.status}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(s.date).toLocaleDateString()}
-                      </span>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-sm text-muted-foreground">Aucun historique</li>
+                className="p-0 h-auto hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+            >
+                <div
+                className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium shadow-sm transition-all"
                 )}
-              </ul>
+                style={statusColorStyles}
+                >
+                {statusIcons[status.status] || <Clock className="h-4 w-4" />}
+                <span>{status.status}</span>
+                <ChevronDown
+                    className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")}
+                />
+                </div>
+            </Button>
+            </PopoverTrigger>
+
+            <PopoverContent
+            className="w-[32rem] max-h-[80vh] overflow-hidden p-0 border rounded-xl shadow-xl bg-white dark:bg-neutral-900 text-foreground"
+            align="start"
+            >
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                <PackageIcon className="h-5 w-5 text-muted-foreground" />
+                <div>
+                    <h3 className="font-medium text-base">Historique du colis</h3>
+                    <p className="text-xs text-muted-foreground">Tracking: {tracking}</p>
+                </div>
+                </div>
+                {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            </div>
+
+            {/* Body */}
+            <div className="px-4 py-4 overflow-y-auto max-h-[65vh]">
+                {error ? (
+                <div className="flex flex-col items-center text-center gap-3 py-6">
+                    <AlertCircle className="h-8 w-8 text-destructive" />
+                    <p className="text-sm text-destructive">{error}</p>
+                    <Button variant="outline" size="sm" onClick={fetchStatusHistory}>
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Réessayer
+                    </Button>
+                </div>
+                ) : history.length > 0 ? (
+                <div className="space-y-4">
+                    {history.map((item, index) => {
+                    const StatusIcon = statusIcons[item.status]?.type || Clock;
+
+                    return (
+                        <div key={index} className="flex gap-3 group">
+                        {/* Timeline icon and line */}
+                        <div className="flex flex-col items-center pt-1">
+                            <div
+                            className="p-2 border rounded-md shadow-sm"
+                            style={{
+                                backgroundColor: item.status_color,
+                                color: item.status_text_color
+                            }}
+                            >
+                            <StatusIcon className="h-4 w-4" />
+                            </div>
+                            {index !== history.length - 1 && (
+                            <div className="w-px h-full bg-border mt-1" />
+                            )}
+                        </div>
+
+                        {/* Text block */}
+                        <div className="flex-1 pb-4">
+                            <div className="flex justify-between items-start">
+                            <span
+                                className="text-sm font-medium"
+                                style={{ color: item.status_text_color }}
+                            >
+                                {item.status}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{item.date}</span>
+                            </div>
+
+                            <div className="mt-2 space-y-1 text-sm text-foreground">
+                            {item.reason && (
+                                <div className="flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                <span><strong>Raison:</strong> {item.reason}</span>
+                                </div>
+                            )}
+                            {item.livreur && (
+                                <div className="flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                <span><strong>Livreur:</strong> {item.livreur}</span>
+                                </div>
+                            )}
+                            {item.note && (
+                                <div className="flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                <span><strong>Note:</strong> {item.note}</span>
+                                </div>
+                            )}
+                            {!item.note && !item.livreur && !item.reason && (
+                                <div className="text-muted-foreground text-center italic">
+                                Aucun détail supplémentaire.
+                                </div>
+                            )}
+                            </div>
+                        </div>
+                        </div>
+                    );
+                    })}
+                </div>
+                ) : (
+                <div className="flex flex-col items-center justify-center text-muted-foreground py-10">
+                    <Inbox className="h-8 w-8 mb-2" />
+                    <p>Aucun historique</p>
+                </div>
+                )}
+            </div>
             </PopoverContent>
-          </Popover>
+        </Popover>
         );
-      },
+    }
     },
     {
       accessorKey: "location",
@@ -609,10 +741,6 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
     },
   ];
 
-
-//   useEffect(() => {
-//     console.log(selectedIds);
-//   }, [selectedIds]);
 
   return (
     <AppLayout>

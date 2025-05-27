@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ColieController;
+use App\Http\Controllers\ColieHistoryController;
 use App\Http\Controllers\LivreurController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,6 +43,17 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('colis/{colie}/bordereau', [ColieController::class, 'generateBordereau'])->name('admin.colies.bordereau');
     Route::get('colis/bordereaux', [ColieController::class, 'generateMultipleBordereaux'])->name('admin.colies.bordereaux');
     Route::get('colis/export', [ColieController::class, 'export'])->name('admin.colies.export');
+    Route::get('colis/status-history/{tracking}', [ColieHistoryController::class, 'getStatusHistory'])->name('admin.colies.status-history');
+    Route::post('colis/colies/check', [ColieHistoryController::class, 'checkColieExist'])->name('admin.colie.check-exist');
+    Route::post('colis/colie-histories', [ColieHistoryController::class, 'store'])->name('admin.colies.colie-histories.store');
+
+
+    // facture Routes
+    Route::get('payments', [PaymentController::class, 'index'])->name(name: 'admin.payments');
+    Route::get('payments/create', [PaymentController::class, 'create'])->name('admin.payments.create');
+    Route::get('payments/calculate/{livreur}', [PaymentController::class, 'calculate'])->name('admin.payments.calculate');
+    Route::post('payments/store', [PaymentController::class, 'store'])->name('admin.payments.store');
+    Route::delete('payments/{payment_id}', [PaymentController::class, 'destroy'])->name('admin.payments.destroy');
 
 
 });
