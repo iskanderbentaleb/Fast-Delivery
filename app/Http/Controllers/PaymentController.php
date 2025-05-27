@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PaymentCalculationExport;
 use Inertia\Inertia;
 use App\Models\Colie;
 use App\Models\Livreur;
@@ -9,7 +10,10 @@ use App\Models\Payment;
 use App\Models\Communes;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PaymentController extends Controller
 {
@@ -95,7 +99,6 @@ class PaymentController extends Controller
         return $internalRequest ? $data : response()->json($data);
     }
 
-
     /**
      * Store a newly created resource in storage.
      */
@@ -128,24 +131,37 @@ class PaymentController extends Controller
                 ->update(['id_payment' => $payment->id]);
         });
 
-        return to_route('admin.payments')->with('success', 'Paiement créé avec succès.');
+        return to_route('admin.payments.create')->with('success', 'Paiement créé avec succès.');
     }
 
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function exportCalculation(string $payment_id)
     {
-        //
+        $payment = Payment::with('colies')->findOrFail($payment_id);
+
+        $filename = 'payment_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new PaymentCalculationExport($payment), $filename);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+
+    public function paymentPrint(string $payment_id)
     {
-        //
+        $payment = Payment::findOrFail($payment_id); // Find Payment by ID or return 404
+        $payment->load(['livreur', 'creator', 'colies.wilaya', 'colies.commune', 'colies.status']);
+
+        $admin = User::findOrFail(auth()->id());
+        $admin->load(['wilaya', 'commune']);
+
+        $html = view('pdf.payment', compact('payment' , 'admin'))->render();
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        return $pdf->stream("rapport-paiement-{$payment->id}.pdf");
     }
 
     /**

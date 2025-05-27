@@ -76,9 +76,16 @@ export default function Payments({ payments }: PaymentsProps) {
           });
         };
 
-        const handleEdit = () => {
-          router.get(route("admin.payments.edit", { id: payment.id }));
+        const handlePrint = () => {
+          window.open(route("admin.payments.paymentPrint", { payment_id: payment.id }), '_blank');
         };
+
+        const handleExport = () => {
+            window.open(route("admin.payments.export", { payment_id: payment.id }), '_blank');
+            toast.success("Export started!");
+        };
+
+
 
         return (
           <div className="flex justify-center items-center space-x-2">
@@ -121,17 +128,17 @@ export default function Payments({ payments }: PaymentsProps) {
               variant="outline"
               size="sm"
               className="flex items-center"
-              onClick={handleEdit}
+              onClick={handlePrint}
             >
               <Printer className="h-4 w-4" />
             </Button>
 
-            {/* print button */}
+            {/* export button */}
             <Button
               variant="outline"
               size="sm"
               className="flex items-center"
-              onClick={handleEdit}
+              onClick={handleExport}
             >
               <FileDown className="h-4 w-4" />
             </Button>

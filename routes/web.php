@@ -54,6 +54,9 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('payments/calculate/{livreur}', [PaymentController::class, 'calculate'])->name('admin.payments.calculate');
     Route::post('payments/store', [PaymentController::class, 'store'])->name('admin.payments.store');
     Route::delete('payments/{payment_id}', [PaymentController::class, 'destroy'])->name('admin.payments.destroy');
+    Route::get('payments/export/{payment_id}', [PaymentController::class, 'exportCalculation'])->name('admin.payments.export');
+    Route::get('payments/{payment_id}/print', [PaymentController::class, 'PaymentPrint'])->name('admin.payments.paymentPrint');
+
 
 
 });

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Colie extends Model
 {
     protected $table = 'colies';
-
     protected $primaryKey = 'id';
     public $incrementing = false; // Since the ID is a custom string (not auto-increment)
     protected $keyType = 'string';

@@ -31,4 +31,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Livreur::class);
     }
+
+    public function colies()
+    {
+        return $this->hasMany(Colie::class, 'id_payment');
+    }
 }

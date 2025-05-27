@@ -50,4 +50,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+
+    public function wilaya()
+    {
+        return $this->belongsTo(Wilaya::class, 'id_wilaya');
+    }
+
+    public function commune()
+    {
+        return $this->belongsTo(Communes::class, 'id_commune');
+    }
 }

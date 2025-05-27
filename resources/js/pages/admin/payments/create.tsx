@@ -109,6 +109,8 @@ export default function CreatePayment({ livreurs, errors = {} }: CreatePaymentPr
         { ...values, ...paymentData },
         {
           onSuccess: () => {
+            const audio = new Audio('/sounds/payment.mp3');
+            audio.play();
             toast.success("Paiement enregistré !");
             form.reset();
             setPaymentData(EMPTY_PAYMENT_DATA);
@@ -188,37 +190,45 @@ export default function CreatePayment({ livreurs, errors = {} }: CreatePaymentPr
                 </ul>
               </div>
 
-              {/* Montants */}
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                {/* Montants */}
+                <div className="space-y-4">
+                {/* Full width - First input */}
                 <InputBlock
-                  label="Montant des Clients"
-                  value={paymentData.total_client_payment}
-                  span={6}
-                  color="text-red-600"
+                    label="Montant des Clients"
+                    value={paymentData.total_client_payment}
+                    color="text-red-600"
+                    span={6}
                 />
+
+                {/* Row with 3 inputs side by side on medium screens */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <InputBlock
+                    label="Livraisons Réussies"
+                    value={paymentData.total_courier_delivered_payment}
+                    span={2}
+                    />
+                    <InputBlock
+                    label="Frais de Retour"
+                    value={paymentData.total_courier_returnfee_payment}
+                    span={2}
+                    />
+                    <InputBlock
+                    label="Total Livreur"
+                    value={paymentData.total_courier_net_payment}
+                    span={2}
+                    />
+                </div>
+
+                {/* Full width - Last input */}
                 <InputBlock
-                  label="Livraisons Réussies"
-                  value={paymentData.total_courier_delivered_payment}
-                  span={2}
+                    label="Montant Magasin"
+                    value={paymentData.total_store_payment}
+                    color="text-green-600"
+                    large
+                    span={6}
                 />
-                <InputBlock
-                  label="Frais de Retour"
-                  value={paymentData.total_courier_returnfee_payment}
-                  span={2}
-                />
-                <InputBlock
-                  label="Total Livreur"
-                  value={paymentData.total_courier_net_payment}
-                  span={2}
-                />
-                <InputBlock
-                  label="Montant Magasin"
-                  value={paymentData.total_store_payment}
-                  span={6}
-                  color="text-green-600"
-                  large
-                />
-              </div>
+                </div>
+
 
               <Button
                 type="submit"
