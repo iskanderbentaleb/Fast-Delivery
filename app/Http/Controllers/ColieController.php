@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Exports\ColiesExport;
 use App\Http\Requests\StoreColieRequest;
 use App\Http\Requests\UpdateColieRequest;
+use App\Models\colieHistory;
 use App\Models\CommunePrice;
 use ArPHP\I18N\Arabic;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -152,6 +153,14 @@ class ColieController extends Controller
                 'livreur_id' => $validated['livreur_id'],
             ]);
 
+            colieHistory::create([
+                'id_colie'    => $newId,
+                'id_status'   => '001', // en préparation
+                'id_reason'   => null,
+                'id_livreur'  => null,
+                'note'        => null,
+            ]);
+
             // If exchange is requested, create return colis
             if ($hasExchange) {
 
@@ -178,7 +187,16 @@ class ColieController extends Controller
                     'livreur_id' => $validated['livreur_id'],
                 ]);
 
+                colieHistory::create([
+                    'id_colie'    => $returnId,
+                    'id_status'   => '012', // Echange (pas encore ramassé)
+                    'id_reason'   => null,
+                    'id_livreur'  => null,
+                    'note'        => null,
+                ]);
             }
+
+
 
             DB::commit();
 

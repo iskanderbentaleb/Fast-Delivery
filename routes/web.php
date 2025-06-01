@@ -33,6 +33,10 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::put('livreurs/update/{id}', [LivreurController::class, 'update'])->name('admin.livreurs.update');
     Route::delete('livreurs/delete/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
 
+    Route::get('livreurs/{livreur}/dashboard', [LivreurController::class, 'dashboard'])->name('admin.livreurs.dashboard');
+
+
+
     // Colies Routes
     Route::get('colis', [ColieController::class, 'index'])->name('admin.colies');
     Route::get('colis/create', [ColieController::class, 'create'])->name('admin.colies.create');
@@ -48,7 +52,7 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::post('colis/colie-histories', [ColieHistoryController::class, 'store'])->name('admin.colies.colie-histories.store');
 
 
-    // facture Routes
+    // Payemnt Routes
     Route::get('payments', [PaymentController::class, 'index'])->name(name: 'admin.payments');
     Route::get('payments/create', [PaymentController::class, 'create'])->name('admin.payments.create');
     Route::get('payments/calculate/{livreur}', [PaymentController::class, 'calculate'])->name('admin.payments.calculate');
@@ -56,7 +60,6 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::delete('payments/{payment_id}', [PaymentController::class, 'destroy'])->name('admin.payments.destroy');
     Route::get('payments/export/{payment_id}', [PaymentController::class, 'exportCalculation'])->name('admin.payments.export');
     Route::get('payments/{payment_id}/print', [PaymentController::class, 'PaymentPrint'])->name('admin.payments.paymentPrint');
-
 
 
 });

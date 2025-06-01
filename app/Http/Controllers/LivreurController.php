@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateCommunePricesRequest;
-use App\Models\CommunePrice;
-use App\Models\Communes;
-use App\Models\Livreur;
+use App\Models\Status;
+use Inertia\Inertia;
 use App\Models\Wilaya;
+use App\Models\Livreur;
+use App\Models\Payment;
+use App\Models\Communes;
+use App\Models\CommunePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\PaymentController;
+use App\Http\Requests\UpdateCommunePricesRequest;
+use App\Models\Colie;
 
 class LivreurController extends Controller
 {
@@ -49,6 +53,74 @@ class LivreurController extends Controller
         ]);
     }
 
+    public function dashboard(Livreur $livreur)
+    {
+        $total_client_payment = Payment::where('livreur_id', $livreur->id)->sum('total_client_payment');
+        $total_courier_net_payment = Payment::where('livreur_id', $livreur->id)->sum('total_courier_net_payment');
+        $total_store_payment = Payment::where('livreur_id', $livreur->id)->sum('total_store_payment');
+
+        $paymentController = new PaymentController();
+        $payment = $paymentController->calculate($livreur, true);
+
+        $total_client_payment_non_paid = $payment['total_client_payment'];
+        $total_courier_net_payment_non_paid = $payment['total_courier_net_payment'];
+        $total_store_payment_non_paid = $payment['total_store_payment'];
+
+        // Get only statuses relevant for "livraison" display (adjust if needed)
+        $livraisonStatuses = Status::whereIn('status', ['Livré', 'Retourné au vendeur'])->get()->keyBy('id');
+
+        // Prepare livraison chart data
+        $livraisonData = [];
+
+        foreach ($livraisonStatuses as $id => $status) {
+            $count = Colie::where('livreur_id', $livreur->id)
+                ->where('id_status', $id)
+                ->count();
+
+            $livraisonData[] = [
+                'status' => $status->status,
+                'id' => $id,
+                'commandes' => $count,
+                'fill' => $status->backgroundColorHex,
+                'textColor' => $status->TextColorHex,
+            ];
+        }
+
+        // Get all status counts for status distribution chart
+        $statusCounts = Colie::selectRaw('id_status, COUNT(*) as count')
+            ->where('livreur_id', $livreur->id)
+            ->groupBy('id_status')
+            ->pluck('count', 'id_status');
+
+        $allStatuses = Status::all()->keyBy('id');
+
+        $statusChartData = [];
+
+        foreach ($statusCounts as $statusId => $count) {
+            $status = $allStatuses->get($statusId);
+            if ($status) {
+                $statusChartData[] = [
+                    'status' => $status->status,
+                    'commandes' => $count, // renamed from 'visitors'
+                    'fill' => $status->backgroundColorHex,
+                    'label' => $status->status,
+                    'color' => $status->TextColorHex,
+                    'id' => $statusId,
+                ];
+            }
+        }
+
+        return response()->json([
+            'total_client_payment' => $total_client_payment,
+            'total_courier_net_payment' => $total_courier_net_payment,
+            'total_store_payment' => $total_store_payment,
+            'total_client_payment_non_paid' => $total_client_payment_non_paid,
+            'total_courier_net_payment_non_paid' => $total_courier_net_payment_non_paid,
+            'total_store_payment_non_paid' => $total_store_payment_non_paid,
+            'livraison_data' => $livraisonData,
+            'status_chart_data' => $statusChartData,
+        ]);
+    }
 
     /**
      * Show the form for creating a new resource.

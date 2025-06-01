@@ -24,7 +24,7 @@ class StatusSeeder extends Seeder
             ['id' => '008', 'status' => 'Échec livraison', 'backgroundColorHex' => '#D32F2F', 'TextColorHex' => '#FFFFFF'], // Red (failure)
             ['id' => '009', 'status' => 'Retourné vers vendeur', 'backgroundColorHex' => '#C62828', 'TextColorHex' => '#FFFFFF'], // Dark Red
             ['id' => '010', 'status' => 'Retour à retirer', 'backgroundColorHex' => '#E53935', 'TextColorHex' => '#FFFFFF'], // Bright Red
-            ['id' => '011', 'status' => 'Retourné au vendeur', 'backgroundColorHex' => '#FB8C00', 'TextColorHex' => '#000000'], // Orange
+            ['id' => '011', 'status' => 'Retourné au vendeur', 'backgroundColorHex' => '#e52e2e', 'TextColorHex' => '#FFFFFF'], // red
             ['id' => '012', 'status' => 'Echange (pas encore ramassé)', 'backgroundColorHex' => '#616161', 'TextColorHex' => '#FFFFFF'], // Grey (inactive)
             ['id' => '013', 'status' => 'Echange (Ramassé)', 'backgroundColorHex' => '#000000', 'TextColorHex' => '#FFFFFF'], // Purple (custom logic)
             ['id' => '014', 'status' => 'Disparu / Cassé', 'backgroundColorHex' => '#B71C1C', 'TextColorHex' => '#FFFFFF'], // Dark Red for lost/damaged

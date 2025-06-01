@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '../livreurs/components/data-table';
 import { Button } from "@/components/ui/button";
-import { Trash, Edit, MapPinned, DollarSign } from "lucide-react";
+import { Trash, Edit, MapPinned , LayoutDashboard } from "lucide-react";
 import { toast } from 'sonner';
 
 import {
@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/popover";
 
 import { CommunePrices } from '../livreurs/CommunePrices';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {Dashboard} from './Dashboard';
 
 interface Commune {
   id: number;
@@ -105,49 +107,22 @@ export default function Livreurs({ livreurs, communes }: LivreursProps) {
             </PopoverContent>
             </Popover>
 
-            {/* Financial Summary Popover */}
-            <Popover>
-            <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center">
-                <DollarSign className="h-4 w-4" />
-                {/* <span className="ml-1">Bilan</span> */}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-4 text-sm">
-                <div className="space-y-2">
-                <div className="flex justify-between">
-                    <span>Total ramassé</span>
-                    <span className="font-medium text-foreground">
-                    {livreur.total_collected ?? '—'}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Total débets</span>
-                    <span className="font-medium text-foreground">
-                    {livreur.total_debts ?? '—'}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Profit total</span>
-                    <span className="font-medium text-foreground">
-                    {livreur.total_profit ?? '—'}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Profit à recevoir</span>
-                    <span className="font-medium text-green-600 dark:text-green-400">
-                    {livreur.profit_due ?? '—'}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Montant restant à payer</span>
-                    <span className="font-medium text-red-600 dark:text-red-400">
-                    {livreur.remaining_payment ?? '—'}
-                    </span>
-                </div>
-                </div>
-            </PopoverContent>
-            </Popover>
+            {/* dashborad */}
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="outline">
+                        <LayoutDashboard className="h-4 w-4" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[600px]">
+                    <SheetHeader>
+                    <SheetTitle>Dashboard</SheetTitle>
+                    </SheetHeader>
+                        <Dashboard livreurId={livreur.id} />
+                </SheetContent>
+            </Sheet>
+
+
 
             {/* Edit Button */}
             <Button
