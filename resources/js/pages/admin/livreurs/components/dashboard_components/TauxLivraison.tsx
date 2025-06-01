@@ -38,7 +38,7 @@ export function TauxLivraison({ title, data, highlightKey, chartConfig }: Props)
   const percentage = totalCommandes > 0 ? (highlightedCount / totalCommandes) * 100 : 0
 
   return (
-    <Card className="flex flex-col mb-5">
+    <Card className="flex flex-col mb-1">
       <CardHeader className="items-center pb-0">
         <CardTitle>{title}</CardTitle>
       </CardHeader>

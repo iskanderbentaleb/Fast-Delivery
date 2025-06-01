@@ -116,9 +116,17 @@ export default function Livreurs({ livreurs, communes }: LivreursProps) {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[600px]">
                     <SheetHeader>
-                    <SheetTitle>Dashboard</SheetTitle>
+                        <SheetTitle>
+                            Tableau de bord
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {livreur.name}
+                            </p>
+                        </SheetTitle>
                     </SheetHeader>
+                    <div className="h-full overflow-y-auto mt-4 mb-40">
                         <Dashboard livreurId={livreur.id} />
+                    </div>
+
                 </SheetContent>
             </Sheet>
 

@@ -37,7 +37,7 @@ export function StatusDistributionChart({
   }, [data])
 
   return (
-    <Card className="flex flex-col mb-9">
+    <Card className="flex flex-col mb-14">
       <CardHeader className="items-center pb-0">
         <CardTitle>{title}</CardTitle>
         {/* <CardDescription>{description}</CardDescription> */}

@@ -3,6 +3,8 @@ import axios from "axios";
 
 import { StatusDistributionChart } from "./components/dashboard_components/StatusDistributionChart";
 import { TauxLivraison } from "./components/dashboard_components/TauxLivraison";
+import CountUp from "react-countup";
+
 
 const Dashboard = ({ livreurId }) => {
   const [metrics, setMetrics] = useState([]);
@@ -66,13 +68,13 @@ const Dashboard = ({ livreurId }) => {
         const generatedLivraisonChartConfig = Object.fromEntries(
           formattedLivraisonData.map((item) => [
             item.browser,
-            { label: item.label, color: item.fill, textColor: item.textColor },
+            { label: item.label + " = " , color: item.fill, textColor: item.textColor },
           ])
         );
 
         // 📊 Status distribution
         const formattedStatusData = data.status_chart_data.map((item) => ({
-          browser: item.status,
+          browser: item.status + " =  ",
           commandes: item.commandes,
           fill: item.fill,
         }));
@@ -107,40 +109,55 @@ const Dashboard = ({ livreurId }) => {
   }
 
   return (
-    <div className="h-full overflow-y-auto space-y-8 scrollbar-hide mt-3 mb-4">
-      <div className="grid grid-cols-1 gap-2">
-        {metrics.length > 0 ? (
-          metrics.map((metric, index) => (
-            <div
-              key={index}
-              className="rounded-2xl border bg-white dark:bg-zinc-900 p-5 shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              <h4 className="text-sm text-gray-500 font-medium mb-1 dark:text-white">
-                {metric.label}
-              </h4>
-              <p className="text-2xl font-bold" style={{ color: metric.color }}>
-                {metric.value}
-              </p>
-            </div>
-          ))
-        ) : (
-          <div>Aucune donnée disponible.</div>
+    <div className="h-full overflow-y-auto space-y-2 scrollbar-hide">
+        <div className="grid grid-cols-1 gap-2">
+            {metrics.length > 0 ? (
+                metrics.map((metric, index) => (
+                    <div
+                    key={index}
+                    className="rounded-2xl border bg-white dark:bg-zinc-900 p-5 shadow-sm hover:shadow-md transition-all duration-300"
+                    >
+                    <h4 className="text-sm text-gray-500 font-medium mb-1 dark:text-white">
+                        {metric.label}
+                    </h4>
+                    <p className="text-2xl font-bold" style={{ color: metric.color }}>
+                        <CountUp
+                        start={0}
+                        end={parseFloat(metric.value.replace(/[^\d.-]/g, ""))}
+                        duration={0.7}
+                        separator=","
+                        />
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-white">
+                        DZD
+                    </p>
+                    </div>
+                ))
+                ) : (
+                <div>Aucune donnée disponible.</div>
+            )}
+        </div>
+
+
+        {livraisonData[0]?.commandes > 0 && (
+        <TauxLivraison
+            title="Taux de livraison"
+            highlightKey="livré"
+            data={livraisonData}
+            chartConfig={livraisonChartConfig}
+        />
         )}
-      </div>
 
-      <TauxLivraison
-        title="Taux de livraison"
-        data={livraisonData}
-        highlightKey="livré" // should match lowercase status name
-        chartConfig={livraisonChartConfig}
-      />
 
-      <StatusDistributionChart
-        title="Répartition des statuts"
-        description="Statistiques de Janvier à Juin 2024"
-        data={statusChartData}
-        config={statusChartConfig}
-      />
+        {statusChartData.length > 0 && (
+            <StatusDistributionChart
+                title="Répartition des statuts"
+                description=""
+                data={statusChartData}
+                config={statusChartConfig}
+            />
+        )}
+
     </div>
   );
 };
