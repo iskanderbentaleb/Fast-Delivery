@@ -13,8 +13,8 @@ export default function AuthSplitLayout({ children, title, description }: AuthLa
 
     const currentPath : string = window.location.pathname;
 
-     // Determine the background color based on the URL
-     const bgColor = currentPath.startsWith('/admin') ? 'bg-zink-500' : currentPath.startsWith('/livreur') ? 'bg-blue-900' : 'bg-zinc-900';
+    // Determine the background color based on the URL
+    const bgColor = currentPath.startsWith('/admin') ? 'bg-zinc-950' : currentPath.startsWith('/livreur') ? 'bg-blue-900' : 'bg-zinc-900';
 
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
