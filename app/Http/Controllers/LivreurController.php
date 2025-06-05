@@ -43,7 +43,7 @@ class LivreurController extends Controller
                 });
             })
             ->latest() // Order results by latest
-            ->paginate(10) // Paginate results
+            ->paginate(8) // Paginate results
             ->appends(['search' => $search]); // Keep the search query in pagination links
 
         return Inertia::render('admin/livreurs/index', [

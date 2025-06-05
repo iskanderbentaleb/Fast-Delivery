@@ -27,7 +27,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
-                        Settings
+                        Paramètres
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -35,7 +35,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuItem asChild>
                 <Link className="block w-full" method="post" href={logoutRoute} as="button" onClick={cleanup}>
                     <LogOut className="mr-2" />
-                    Log out
+                    Se déconnecter
                 </Link>
             </DropdownMenuItem>
         </>

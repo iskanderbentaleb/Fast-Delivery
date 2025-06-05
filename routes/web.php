@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ColieController;
 use App\Http\Controllers\ColieHistoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LivreurController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -22,7 +23,9 @@ Route::get('/', function () {
 
 
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
-    Route::get('dashboard', function () {return Inertia::render('admin/dashboard'); })->name('admin.dashboard');
+    // Dashboard Route
+    Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
+
 
     // Livreur Routes
     Route::get('livreurs', [LivreurController::class, 'index'])->name('admin.livreurs');
@@ -32,7 +35,6 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('livreurs/edit/{id}', [LivreurController::class, 'edit'])->name('admin.livreurs.edit');
     Route::put('livreurs/update/{id}', [LivreurController::class, 'update'])->name('admin.livreurs.update');
     Route::delete('livreurs/delete/{id}', [LivreurController::class, 'destroy'])->name('admin.livreurs.destroy');
-
     Route::get('livreurs/{livreur}/dashboard', [LivreurController::class, 'dashboard'])->name('admin.livreurs.dashboard');
 
 

@@ -290,7 +290,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 hover:bg-accent/50"
+                      className="h-8 w-8 hover:bg-accent/50 dark:hover:bg-zinc-900"
                       onClick={handleCopy}
                       aria-label="Copier le tracking"
                     >
@@ -309,7 +309,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
 
             <Badge className={cn(
                 "font-mono flex items-center gap-2 py-2 px-3 rounded-lg",
-                "bg-zinc-950 dark:text-zinc-200",
+                "bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900",
                 "border border-zinc-200 dark:border-zinc-800")}>
                 <span className="truncate max-w-[120px] sm:max-w-[180px]">
                     {tracking}
@@ -446,7 +446,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
             </PopoverTrigger>
 
             <PopoverContent
-            className="w-[32rem] max-h-[80vh] overflow-hidden p-0 border rounded-xl shadow-xl bg-white dark:bg-neutral-900 text-foreground"
+            className="w-[32rem] max-h-[50vh] p-0 border rounded-xl shadow-xl bg-white dark:bg-neutral-900 text-foreground"
             align="start"
             >
             {/* Header */}
@@ -461,8 +461,8 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
                 {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
 
-            {/* Body */}
-            <div className="px-4 py-4 overflow-y-auto max-h-[65vh]">
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto max-h-[40vh] px-4 py-4">
                 {error ? (
                 <div className="flex flex-col items-center text-center gap-3 py-6">
                     <AlertCircle className="h-8 w-8 text-destructive" />
@@ -545,6 +545,7 @@ const [selectionModalOpen, setSelectionModalOpen] = useState(false);
                 )}
             </div>
             </PopoverContent>
+
         </Popover>
         );
     }

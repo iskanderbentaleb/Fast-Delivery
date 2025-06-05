@@ -4,6 +4,8 @@ import { Label, Pie, PieChart } from "recharts"
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -13,6 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { Truck } from "lucide-react"
 
 type ChartDataItem = {
   browser: string
@@ -29,18 +32,19 @@ type BrowserDistributionChartProps = {
 
 export function StatusDistributionChart({
   title,
+  description,
   data,
   config,
 }: BrowserDistributionChartProps) {
-  const totalVisitors = React.useMemo(() => {
+  const totalColis = React.useMemo(() => {
     return data.reduce((acc, curr) => acc + curr.commandes, 0)
   }, [data])
 
   return (
-    <Card className="flex flex-col mb-14">
+    <Card className="flex flex-col mb-14 h-full">
       <CardHeader className="items-center pb-0">
         <CardTitle>{title}</CardTitle>
-        {/* <CardDescription>{description}</CardDescription> */}
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -74,7 +78,7 @@ export function StatusDistributionChart({
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalColis.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -93,6 +97,18 @@ export function StatusDistributionChart({
           </PieChart>
         </ChartContainer>
       </CardContent>
+
+        <CardFooter className="flex-col gap-2 text-sm">
+            <div className="flex items-center gap-2 leading-none font-medium">
+                <Truck className="h-4 w-4 text-muted-foreground" />
+                {`Analyse de ${totalColis.toLocaleString()} colis pour suivre vos performances.`}
+            </div>
+            <div className="text-muted-foreground leading-none">
+                Données mises à jour automatiquement à chaque changement de statut.
+            </div>
+        </CardFooter>
+
+
     </Card>
   )
 }

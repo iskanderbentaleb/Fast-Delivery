@@ -38,7 +38,7 @@ class PaymentController extends Controller
                 });
             })
             ->latest('updated_at')
-            ->paginate(10)
+            ->paginate(8)
             ->appends(['search' => $search]);
 
         $livreurs = Livreur::select('id', 'name')->get();
@@ -63,10 +63,13 @@ class PaymentController extends Controller
     }
 
 
-    public function calculate(Livreur $livreur, bool $internalRequest = false)
+    public function calculate(Livreur $livreur = null, bool $internalRequest = false)
     {
-        $unpaidColis = Colie::whereNull('id_payment')
-            ->where('livreur_id', $livreur->id);
+        $unpaidColis = Colie::whereNull('id_payment');
+
+        if ($livreur?->id) {
+            $unpaidColis->where('livreur_id', $livreur->id);
+        }
 
         $deliveredColis = clone $unpaidColis;
         $returnedColis = clone $unpaidColis;

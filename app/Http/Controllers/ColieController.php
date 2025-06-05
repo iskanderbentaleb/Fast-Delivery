@@ -59,7 +59,7 @@ class ColieController extends Controller
         $statuses = Status::all();
         $reasons = Reason::all();
 
-        $colies = $query->paginate(10)->appends([
+        $colies = $query->paginate(8)->appends([
             'search' => $request->input('search'),
             'statuses' => $request->input('statuses', [])
         ]);
