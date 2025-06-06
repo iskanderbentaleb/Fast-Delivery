@@ -30,12 +30,12 @@ class LivreurSeeder extends Seeder
         // Insert sample Livreurs
         DB::table('livreurs')->insert([
             [
-                'name' => 'Ahmed Bouzid',
-                'phone' => '0555123456',
+                'name' => 'Test Livreur',
+                'phone' => '0000000000',
                 'wilaya_id' => $wilaya->id,
-                'email' => 'iskanderboss1999@gmail.com',
+                'email' => 'test-livreur@gmail.com',
                 'email_verified_at' => now(),
-                'password' => Hash::make('iskanderboss1999@gmail.com'), // Hashed password
+                'password' => Hash::make('test-livreur@gmail.com'), // Hashed password
                 'remember_token' => Str::random(10),
                 'created_at' => now(),
                 'updated_at' => now(),
