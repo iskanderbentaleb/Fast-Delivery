@@ -30,7 +30,7 @@ A modern web application built with Laravel 12, Inertia.js, and React.js, design
 - Shadcn UI
 
 **Additional:**
-- Laravel 12 Starter Kit (customized for dual user types)
+- Laravel 12 Starter Kit (modified to support two user types)
 
 ---
 
