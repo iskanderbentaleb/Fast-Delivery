@@ -63,6 +63,30 @@ A modern web application built with Laravel 12, Inertia.js, and React.js, design
     cp .env.example .env
     ```
     > **Note:** Edit the `.env` file with your database credentials and mail settings.
+    
+    Database credentials :
+
+    ```bash
+    DB_CONNECTION=sqlite
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=laravel
+    DB_USERNAME=root
+    DB_PASSWORD=
+    ```
+
+    Mail settings :
+    
+    ```bash
+    MAIL_MAILER=log
+    MAIL_SCHEME=null
+    MAIL_HOST=127.0.0.1
+    MAIL_PORT=2525
+    MAIL_USERNAME=null
+    MAIL_PASSWORD=null
+    MAIL_FROM_ADDRESS="hello@example.com"
+    MAIL_FROM_NAME="${APP_NAME}"
+    ```
 
 4. **Generate application key**
     ```bash
