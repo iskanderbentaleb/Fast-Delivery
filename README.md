@@ -73,6 +73,7 @@ A modern web application built with Laravel 12, Inertia.js, and React.js, design
     - Edit `database/seeders/UserSeeder.php` with your admin credentials
     - Edit `database/seeders/LivreurSeeder.php` with your delivery personnel credentials
     - Run migrations and seeders:
+      
       ```bash
       php artisan migrate --seed
       ```
