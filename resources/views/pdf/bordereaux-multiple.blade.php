@@ -282,7 +282,14 @@
                 <div class="address-title">Destinataire</div>
                 <div class="address-content">
                     <strong style="display: inline">{{ $colie->client_fullname ?? '/' }}</strong>
-                    <strong style="display: inline">( {{ $colie->client_phone ?? 'Non spécifié' }} )</strong>
+                    {{-- <strong style="display: inline">( {{ $colie->client_phone ?? 'Non spécifié' }} )</strong> --}}
+                    <strong style="display: inline">
+                        ( {{
+                            collect(explode(',', $colie->client_phone ?? ''))
+                            ->map(fn($n) => implode(' ', str_split(trim($n), 2)))
+                            ->implode(', ') ?: 'Non spécifié'
+                        }} )
+                    </strong>
                     <div>
                         {{ $colie->wilaya->wilaya_name ?? 'Error' }},
                         {{ $colie->commune->commune_name ?? 'Wilaya inconnue' }},
